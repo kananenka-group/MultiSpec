@@ -39,6 +39,9 @@
 
 # slurm scripts
 *.sbatch
+*.err
+*.out
 
 # binary files
 *.bin
+

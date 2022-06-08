@@ -224,7 +224,7 @@ void Exc::calcR1D(int ti)
 
   double dtc = (double) ti;
   double exptc = exp(-1.0*dt*dtc/(2.0*rlx_time));
-  complex<double> tmptcf = (cx+cy+cz)*exptc; ///3.0;
+  complex<double> tmptcf = (cx+cy+cz)*exptc/3.0;
   mR1D[ti] += tmptcf;
 
 }

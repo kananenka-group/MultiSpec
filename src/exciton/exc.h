@@ -15,6 +15,7 @@
 #include <pthread.h>
 #include "../const/const.h"
 #include "../fft/dofft.h"
+#include "../math/nummath.h"
 
 using namespace std;
 

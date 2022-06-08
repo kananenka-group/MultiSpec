@@ -1,5 +1,4 @@
 #include "exc.h"
-#include "../math/nummath.h"
 
 using namespace std;
 
@@ -119,17 +118,20 @@ void Exc::Raman()
 
    fgrid1D();
 
+   // FFT to get spectra
    FFT1D(VVT, VVw, dt, NFFT);
    FFT1D(VHT, VHw, dt, NFFT);
 
-   double ivv = simpsonInt(wgrid1d, VVw);
-   double ivh = simpsonInt(wgrid1d, VHw);
-   double dep_rat = ivh/ivv;
-   printf("     Depolarization ratio %7.5f \n",dep_rat);
+   // calculate depolarization ratio
+   double ivv, ivh, dr;
+   ivv = simpsonInt(wgrid1d, VVw);
+   ivh = simpsonInt(wgrid1d, VHw);
+   dr = ivh/ivv;
+   printf("     Depolarization ratio %7.5f \n",dr);
 
+   // print stuff..
    printTCF1D("vvt.dat", "VV", VVT);
    printTCF1D("vht.dat", "VH", VHT);
-
    printRamT();
    printRamS();
    printIw1D("vvw.dat", "VV", VVw);

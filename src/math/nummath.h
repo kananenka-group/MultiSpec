@@ -1,10 +1,12 @@
 #ifndef NMATH
 #define NMATH
 
+#include <vector>
 #include <cmath>
+#include <complex>
 
-template <typename func_type>
+using namespace std;
 
-double simpsonInt(double a, double b, int n, func_type f)
+double simpsonInt(vector<double> x, vector<complex<double>> y);
 
-#endif NMATH
+#endif 

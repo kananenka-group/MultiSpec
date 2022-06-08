@@ -1,5 +1,5 @@
 #include "exc.h"
-//#include "../Math/nummath.h"
+#include "../math/nummath.h"
 
 using namespace std;
 
@@ -117,15 +117,21 @@ void Exc::Raman()
       readPf(nsep,false);
    }
 
-   double dep_rat = 0.0;
-   printf("     Depolarization ratio %7.5f \n",dep_rat);
+   fgrid1D();
 
    FFT1D(VVT, VVw, dt, NFFT);
    FFT1D(VHT, VHw, dt, NFFT);
 
+   double ivv = simpsonInt(wgrid1d, VVw);
+   double ivh = simpsonInt(wgrid1d, VHw);
+   double dep_rat = ivh/ivv;
+   printf("     Depolarization ratio %7.5f \n",dep_rat);
+
    printTCF1D("vvt.dat", "VV", VVT);
    printTCF1D("vht.dat", "VH", VHT);
 
+   printRamT();
+   printRamS();
    printIw1D("vvw.dat", "VV", VVw);
    printIw1D("vhw.dat", "VH", VHw);
 
@@ -168,6 +174,8 @@ void Exc::FTIR()
       readHf(nsep);
       readDf(nsep,false);
    }
+
+   fgrid1D();
 
    FFT1D(mR1D, IRw, dt, NFFT);
 
@@ -346,19 +354,12 @@ void Exc::printIw1D(string specf, string stype, vector<complex<double>> Iw)
       exit(EXIT_FAILURE);
    }
 
-   double freq;
    printf("     Writing %s Spectra into %s \n",stype.c_str(),specf.c_str());
-   for(int i=NFFT/2; i<NFFT; ++i)
-   {
-      freq = 2*M_PI*HBAR*(i-NFFT)/(dt*NFFT);
-      o_iw_file << freq << "  " << Iw[i].real()/navg << endl;
-   }
+   for(int i=NFFT/2, j=0; i<NFFT; ++i, j++)
+      o_iw_file << wgrid1d[j] << "  " << Iw[i].real()/navg << endl;
 
-   for(int i=0; i<NFFT/2; ++i)
-   {
-      freq = 2*M_PI*HBAR*i/(dt*NFFT);
-      o_iw_file << freq << "  " << Iw[i].real()/navg << endl;
-   }
+   for(int i=0, j=NFFT/2; i<NFFT/2; ++i, ++j)
+      o_iw_file << wgrid1d[j] << "  " << Iw[i].real()/navg << endl;
 
    o_iw_file.close();
 
@@ -518,3 +519,80 @@ void Exc::calcRm(int ti)
 
 }
 
+void Exc::fgrid1D()
+{
+   wgrid1d.resize(NFFT);
+   for(int i=NFFT/2, j=0; i<NFFT; ++i, ++j)
+       wgrid1d[j] = 2*M_PI*HBAR*(i-NFFT)/(dt*NFFT);
+   
+   for(int i=0, j=NFFT/2; i<NFFT/2; ++i, ++j)
+      wgrid1d[j] = 2*M_PI*HBAR*i/(dt*NFFT);
+
+}
+
+void Exc::printRamT()
+{
+   ofstream o_r_file;
+   o_r_file.open("isot.dat");
+   if(!o_r_file.is_open()){
+      printf(" Error! Cannot open file: isot.dat \n");
+      exit(EXIT_FAILURE);
+   }
+
+   printf("     Writing Raman isotropic TCF into isot.dat \n");
+   for(int t1=0; t1<ncor; ++t1)
+      o_r_file << t1*dt << "  " << (VVT[t1].real() - 0.75*VHT[t1].real())/navg << "  " << (VVT[t1].imag() - 0.75*VHT[t1].imag())/navg << endl;
+
+   o_r_file.close();
+
+   ofstream o_ru_file;
+   o_ru_file.open("unpt.dat");
+   if(!o_ru_file.is_open()){
+      printf(" Error! Cannot open file: unpt.dat \n");
+      exit(EXIT_FAILURE);
+   }
+
+   printf("     Writing Raman unpolarized TCF into unpt.dat \n");
+   for(int t1=0; t1<ncor; ++t1)
+      o_ru_file << t1*dt << "  " << (VVT[t1].real() + VHT[t1].real())/navg << "  " << (VVT[t1].imag() + VHT[t1].imag())/navg << endl;
+
+   o_ru_file.close();
+
+}
+
+void Exc::printRamS()
+{
+   ofstream o_isw_file;
+   o_isw_file.open("isow.dat");
+   if(!o_isw_file.is_open()){
+      printf(" Error! Cannot open file: isow.dat \n");
+      exit(EXIT_FAILURE);
+   }
+
+   printf("     Writing Raman isotropic Spectra into isow.dat \n");
+   for(int i=NFFT/2, j=0; i<NFFT; ++i, j++)
+      o_isw_file << wgrid1d[j] << "  " << (VVw[i].real() - (4.0/3.0)*VHw[i].real())/navg << endl;
+
+   for(int i=0, j=NFFT/2; i<NFFT/2; ++i, ++j)
+      o_isw_file << wgrid1d[j] << "  " << (VVw[i].real() - (4.0/3.0)*VHw[i].real())/navg << endl;
+
+   o_isw_file.close();
+
+   ofstream o_upw_file;
+   o_upw_file.open("unpw.dat");
+   if(!o_upw_file.is_open()){
+      printf(" Error! Cannot open file: unpw.dat \n");
+      exit(EXIT_FAILURE);
+   }
+
+   printf("     Writing Raman unpolarized Spectra into unpw.dat \n");
+   for(int i=NFFT/2, j=0; i<NFFT; ++i, j++)
+      o_upw_file << wgrid1d[j] << "  " << (VVw[i].real() + VHw[i].real())/navg << endl;
+
+   for(int i=0, j=NFFT/2; i<NFFT/2; ++i, ++j)
+      o_upw_file << wgrid1d[j] << "  " << (VVw[i].real() + VHw[i].real())/navg << endl;
+
+   o_upw_file.close();
+
+   
+}

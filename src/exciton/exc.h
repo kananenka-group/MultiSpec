@@ -38,6 +38,9 @@ private:
    void calcRm(int);
    void printTCF1D(string, string, vector<complex<double>>);
    void printIw1D(string, string, vector<complex<double>>);
+   void fgrid1D();
+   void printRamT();
+   void printRamS();
 
    vector<double> H1;
    vector<double> mu1_x;
@@ -58,6 +61,7 @@ private:
    vector<double> plz_yy0;
    vector<double> plz_yz0;
    vector<double> plz_zz0;
+   vector<double> wgrid1d;
 
    vector<complex<double>> F;
    vector<complex<double>> mR1D;

@@ -2,22 +2,21 @@
 
 using namespace std;
 
-double simpsonInt(double a, double b,
-                    int n, func_type f)
+double simpsonInt(vector<double> x, vector<complex<double>> y)
 {
-    double h = (b - a) / n;
 
-    // Internal sample points, there should be n - 1 of them
-    double sum_odds = 0.0;
-    for (int i = 1; i < n; i += 2)
-    {
-       sum_odds += f(std::fma(i,h,a));
-    }
-    double sum_evens = 0.0;
-    for (int i = 2; i < n; i += 2)
-    {
-       sum_evens += f(std::fma(i,h,a);
-    }
+    int N = x.size() - 1;
+    double h = x[1] - x[0]; 
 
-    return (std::fma(2,sum_evens,f(a)) + std::fma(4,sum_odds,f(b))) * h / 3;
+    double result = 0.0;
+
+    for(int i=1; i<N; i=i+2)
+       result += (h/3.0)*(y[i-1].real() + 4.0*y[i].real() + y[i+1].real()); 
+    
+    if(N % 2 == 1){
+        result += y[N].real()*5.0*h/12.0;
+        result += y[N-1].real()*2.0*h/3.0;
+        result -= y[N-2].real()*h/12.0;
+    }
+    return result;
 }

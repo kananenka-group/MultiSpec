@@ -30,3 +30,15 @@
 *.exe
 *.out
 *.app
+
+# Output files
+*.dat
+
+# trajectory file (too long)
+*.xtc
+
+# slurm scripts
+*.sbatch
+
+# binary files
+*.bin

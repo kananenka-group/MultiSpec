@@ -127,7 +127,7 @@ void Exc::Raman()
    ivv = simpsonInt(wgrid1d, VVw);
    ivh = simpsonInt(wgrid1d, VHw);
    dr = ivh/ivv;
-   printf("     Depolarization ratio %7.5f \n",dr);
+   printf("     Average depolarization ratio [Appl. Opt. 52, 2503 (2013)] = %7.5f \n",dr);
 
    // print stuff..
    printTCF1D("vvt.dat", "VV", VVT);

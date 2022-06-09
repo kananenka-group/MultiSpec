@@ -23,6 +23,7 @@ public:
   double gettc()   const { return tc; }
   double getTrlx() const { return trlx; }
   double getTsep() const { return tsep; }
+  double getWavg() const { return w_avg; }
 
   bool ifIR()     const { return ir; }
   bool ifRaman()  const { return raman; }
@@ -42,6 +43,7 @@ private:
   double tc = 1.00;  // correlation time in ps
   double trlx = 0.2;
   double tsep = 2.0; // separation time in ps
+  double w_avg = 0.0;
 
   bool ir = false;     // calc IR spectra
   bool raman = false;  // calc Raman spectra

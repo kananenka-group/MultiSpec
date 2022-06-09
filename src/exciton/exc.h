@@ -23,7 +23,7 @@ class Exc{
 
 public:
    Exc(string, string, int, int, double, double, double, int, double, 
-       bool, bool);
+       bool, bool, double);
   ~Exc(){};
 
    void run();
@@ -76,6 +76,7 @@ private:
    double dt;
    double rlx_time;
    double sep_time;
+   double w_avg;
 
    int nchrom;
    int ntime;

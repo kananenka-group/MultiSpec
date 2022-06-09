@@ -17,6 +17,7 @@ Input::Input(int argc, char ** argv){
        ("tc",     po::value<double>(&tc),              "Propagation time [ps]")
        ("tsep",   po::value<double>(&tsep),            "Separation time [ps]")
        ("T1",     po::value<double>(&trlx),            "Relaxation time [ps]")
+       ("w_avg",  po::value<double>(&w_avg),           "Average frequency [cm-1]")
        ("H",      po::value<std::string>(&Hfile),      "Hamiltonian file")
        ("D",      po::value<std::string>(&Dfile),      "Dipole file")
        ("P",      po::value<std::string>(&Pfile),      "Polarizability file")

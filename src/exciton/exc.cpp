@@ -3,10 +3,11 @@
 using namespace std;
 
 Exc::Exc(string h_file_name, string d_file_name, int nchr, int nt, double deltaT,
-         double corrT, double trel, int nv, double tsep, bool irs, bool ramans):
+         double corrT, double trel, int nv, double tsep, bool irs, bool ramans,
+         double wav):
          Hfile(h_file_name), Dfile(d_file_name), nchrom(nchr), ntime(nt), dt(deltaT),
-         tc(corrT), rlx_time(trel), navg(nv), sep_time(tsep), ir(irs), raman(ramans)
-
+         tc(corrT), rlx_time(trel), navg(nv), sep_time(tsep), ir(irs), raman(ramans),
+         w_avg(wav)
 {
    // setting up some variables 
    int nfrmn;
@@ -316,6 +317,8 @@ void Exc::readHf(int nread)
             H1[i*nchrom + j] = (double) Htmp[jj+j];
             H1[j*nchrom + i] = H1[i*nchrom + j];
          }
+         // subtract average frequency to improve numerical stability
+         H1[i*nchrom + i] -= w_avg;
       }
    }
  
@@ -525,10 +528,10 @@ void Exc::fgrid1D()
 {
    wgrid1d.resize(NFFT);
    for(int i=NFFT/2, j=0; i<NFFT; ++i, ++j)
-       wgrid1d[j] = 2*M_PI*HBAR*(i-NFFT)/(dt*NFFT);
+       wgrid1d[j] = 2*M_PI*HBAR*(i-NFFT)/(dt*NFFT) + w_avg;
    
    for(int i=0, j=NFFT/2; i<NFFT/2; ++i, ++j)
-      wgrid1d[j] = 2*M_PI*HBAR*i/(dt*NFFT);
+      wgrid1d[j] = 2*M_PI*HBAR*i/(dt*NFFT) + w_avg;
 
 }
 

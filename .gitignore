@@ -45,3 +45,9 @@
 # binary files
 *.bin
 
+# latex aux
+*.aux
+*.fls
+*.log
+*.fdb_latexmk
+*.gz

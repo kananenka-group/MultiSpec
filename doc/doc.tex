@@ -1,0 +1,62 @@
+\documentclass{article}
+
+\usepackage{amsmath,amssymb}
+\usepackage[superscript]{cite}
+\usepackage{cleveref}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+
+\renewcommand\labelitemi{-{}-}
+
+\begin{document}
+
+\title{MultiSpec reference guide}
+\author{Alexei A. Kananenka}
+\date{\today}
+\maketitle
+
+\section{Water module}
+Water module generates an input for the exciton module. The input consists of excitonic hamiltonian trajectory as well as 
+transition dipole and transition polarizability trajectories for IR, Raman, and SFG calculations.
+
+\subsection{Input parameters}
+
+\begin{itemize}
+
+\item \textbf{xtc}: (\texttt{string}) path to gromacs *.xtc file.
+\item \textbf{gro\_file}: (\texttt{string}) path to gromacs *.gro file.
+\item \textbf{IR}: (\texttt{bool}) calculate transition dipole derivative moments for IR spectra, options: \{1,0\}.
+\item \textbf{Raman}: (\texttt{bool}) calculate transition polarizability trajectories for Raman spectra, options: \{1,0\}.
+\item \textbf{SFG}: (\texttt{bool}) calculate transition polarizability and transition dipole trajectories for SFG spectra, options: \{1,0\}.
+\item \textbf{nframes}: (\texttt{int}) how many frames read from *.xtc file and process.
+\item \textbf{charge\_file}: (\texttt{string}) path to charge file. Charge file is a simple two-column file containing atom names matching atoms in 
+*.gro file and corresponding charges.
+\item \textbf{water\_model}: (\texttt{string}) water model. Supported water models: \texttt{TIP4P}.
+\item \textbf{stretch\_map}: (\texttt{string}) spectroscopic map for OH and OD stretch. The following maps have been implemented so far:
+\begin{itemize}
+\item F. Li and J. L. Skinner, J. Chem. Phys. 132, 244504 (2010), keyword: \texttt{skinner\_tip4p\_2010}
+\item S. M. Gruenbaum et al., J. Chem. Theory Comput. 9, 3109 (2013), keyword: \texttt{skinner\_tip4p\_2010}
+\end{itemize}
+\item \textbf{chrom\_type}: (\texttt{string}) type of chromophore for which trajectories will be generated. Supported types:
+i) OH(OD) stretch, keyword: \texttt{ws}.
+
+\item \textbf{spec\_type}: (\texttt{string}) type of calculation that will be performed. Supported types: i) OH stretch, keyword: \texttt{wsOH},
+ii) OD stretch, keyword: \texttt{wsOD}, iii) hydroxyl stretch in water isotope mixtures, keyword: \texttt{wsiso}.
+
+\item \textbf{D2O}: (\texttt{int}) the number of D$_2$O molecules mixed with H$_2$O. This is only required for \texttt{--spec\_type=wiso}.
+
+\subsection{Examples}
+\begin{itemize}
+
+\item Generate input files for FTIR calculation of pure H$_2$O:
+
+\texttt{\{PATH\_TO\_WATER\}/water/water\_gen --xtc traj.xtc  --gro\_file confout.gro --charge\_file q.inp --stretch\_map gruenbaum\_tip4p\_2013  --IR 1 --Raman 0 --nframes 10 --chrom\_type ws  --spec\_type wsOH  --water\_model tip4p}
+
+\end{itemize}
+
+ 
+
+\end{itemize}
+
+
+\end{document}

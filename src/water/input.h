@@ -15,8 +15,7 @@ public:
   ~Input() {};
 
   string getTrajFile()   const { return xtc_file; }
-  string getOHMap()      const { return OHmap_name; }
-  string getOHMapA()     const { return ODmap_name; }
+  string getwSMap()      const { return stretch_map_name; }
   string getChromType()  const { return chrom_type; }
   string getWaterModel() const { return water_model; }
   string getGroFile()    const { return gro_file; }
@@ -29,19 +28,18 @@ public:
   bool ifSFG()           const { return sfg; }
 
 private:
-  int nframes;
-  int nd2o;
+  int nframes = 1;
+  int nd2o = 0;
 
   bool ir    = true; 
   bool raman = false; 
   bool sfg   = false;
 
   string xtc_file    = "traj.xtc";
-  string chrom_type  = "OH_stretch";
-  string OHmap_name  = "gruenbaum_tip4p_2013_OH";
-  string ODmap_name  = "gruenbaum_tip4p_2013_OD";
+  string chrom_type  = "ws";
+  string stretch_map_name; 
   string job_type;
-  string water_model = "tip4p";;
+  string water_model = "tip4p";
   string gro_file    = "confout.gro";
   string chg_file    = "charges.dat";
 

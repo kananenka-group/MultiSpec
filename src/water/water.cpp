@@ -1,10 +1,12 @@
 #include "water.h"
 
-water::water(string wm_name, string ctype, int nfr, string OH_wmap_name, string job_type, string traj_file_name,
-             string gro_file_name, string charge_file_name, bool doir, bool doraman, bool dosfg) :
-             water_model_name(wm_name), chromType(ctype), nframes(nfr), jobType(job_type), 
-             traj_file(traj_file_name), gro_file(gro_file_name), chg_file(charge_file_name), wm(OH_wmap_name),
-             ir(doir), raman(doraman), sfg(dosfg)
+water::water(string wm_name, string ctype, int nfr, string wS_wmap_name, string job_type,
+             string traj_file_name, string gro_file_name, string charge_file_name, 
+             bool doir, bool doraman, bool dosfg, int d2o) :
+             water_model_name(wm_name), chromType(ctype), nframes(nfr), 
+             jobType(job_type), traj_file(traj_file_name), gro_file(gro_file_name), 
+             chg_file(charge_file_name), wms(wS_wmap_name, job_type),
+             ir(doir), raman(doraman), sfg(dosfg), nd2o(d2o)
 {
    // create trajectory object
    Traj traj(traj_file.c_str());
@@ -27,9 +29,9 @@ water::water(string wm_name, string ctype, int nfr, string OH_wmap_name, string 
    // generate the Hamiltonian
    rvec box;
    const rvec *x;
-   rvec roh, rAH, rohs, roha, rohb;
-   rvec trda, trdb, ddv;
-   float dm, dm3;
+   rvec roh, rAH, rohs, roha; //, rohb;
+   rvec trda; //, trdb, ddv;
+   //float dm, dm3;
    float ma, mb, xa, xb;
 
    int ii, pp;
@@ -55,7 +57,8 @@ water::water(string wm_name, string ctype, int nfr, string OH_wmap_name, string 
    printf("\n** Generating Excitonic Hamiltonian for %d frames. **\n",nframes);
    int counter=0;
    // 
-   // case 1. OH stretch of water
+   // case 1. hydroxyl stretch of water
+   // pure water no isotope mixtures
    //
    if(ws || pure){
       while(traj.next()==0 && counter<nframes) {
@@ -69,9 +72,6 @@ water::water(string wm_name, string ctype, int nfr, string OH_wmap_name, string 
                pbc(rohs,box);
                unitv(rohs);
                fill(eft.begin(), eft.end(), 0.0);
-               // 
-               // Water
-               //
                for(int k=0;k<nwater;++k){
                   if(i==k) continue;
                   Ok = oxyInd[k];
@@ -116,8 +116,8 @@ water::water(string wm_name, string ctype, int nfr, string OH_wmap_name, string 
                unitv(roha); 
                addRvec(x[oxyInd[i]],roha,trda,trdip);
                pbc(trda,box); 
-               ma = wm.getm01E(ef[2*i+k-1]);
-               xa = wm.getx01E(wm.getw01E(ef[2*i+k-1]));
+               ma = wms.getm01E(ef[2*i+k-1]);
+               xa = wms.getx01E(wms.getw01E(ef[2*i+k-1]));
                // transition dipole
                if(ir){
                   for(int kk=0; kk<3;++kk)
@@ -138,19 +138,10 @@ water::water(string wm_name, string ctype, int nfr, string OH_wmap_name, string 
                // Hamiltonian
                for(int j=(i+1); j<nwater; ++j){
                   for(int l=1;l<3;++l){
-                     addRvec(x[oxyInd[j]+l],x[oxyInd[j]],rohb,-1);
-                     pbc(rohb,box);
-                     unitv(rohb);
-                     addRvec(x[oxyInd[j]],rohb,trdb,trdip);
-                     pbc(trdb,box);
-                     addRvec(trda,trdb,ddv,-1);
-                     pbc(ddv,box);
-                     dm = dist(ddv);
-                     dm3 = dm*dm*dm;
-                     unitv(ddv);
-                     mb = wm.getm01E(ef[2*j+l-1]);
-                     xb = wm.getx01E(wm.getw01E(ef[2*j+l-1]));
-                     hf[ii] = au_to_wn*(dot(roha,rohb)-3.0*dot(roha,ddv)*dot(rohb,ddv))*ma*mb*xa*xb/dm3;
+                     mb = wms.getm01E(ef[2*j+l-1]);
+                     xb = wms.getx01E(wms.getw01E(ef[2*j+l-1]));
+                     hf[ii] = waterTDC(roha, trda, x[oxyInd[j]+l], x[oxyInd[j]], box);
+                     hf[ii] *= ma*mb*xa*xb;
                      ii++;
                   }
                }
@@ -163,6 +154,16 @@ water::water(string wm_name, string ctype, int nfr, string OH_wmap_name, string 
          if(raman) plzbt.insert(plzbt.end(), begin(plzbf), end(plzbf));
          counter++;
       }
+   }
+   ///////////////////////////////////////////////////////////////////////////////////////////////
+   //                                                                                           //
+   //  Case 2. Water hydroxyl stretch and isotope mixtures                                      //
+   //                                                                                           //
+   ///////////////////////////////////////////////////////////////////////////////////////////////
+   else if(ws || iso)
+   {
+
+
    }
 
    printf("\n** Writing Excitonic Hamiltonian into Hamiltonian.bin **\n");
@@ -218,15 +219,15 @@ void water::waterChrom()
    printf("\n** Reading chromophore type **\n");
 
    if(chromType=="ws"){
-      printf("   Chromophore: water OH stretch \n");
+      printf("   Chromophore: water hydroxyl stretch \n");
       ws = true;
       nchrom = 2*nwater;
    }else if(chromType=="wb"){
-      printf("   Chromophore: water HOH bend \n");
+      printf("   Chromophore: water bend \n");
       wb = true;
       nchrom = nwater;
    }else if(chromType=="ws+wb"){
-      printf("   Chromophore: water OH stretch + HOH bend (with Fermi resonance)\n");
+      printf("   Chromophore: water hydroxyl stretch + bend (with Fermi resonance)\n");
       wf = true;
       nchrom = 3*nwater;
    }else{
@@ -237,14 +238,19 @@ void water::waterChrom()
 
 void water::waterJob()
 {
-   pure = false;
-  
    printf("\n** Reading job type ** \n");
-   if(jobType=="pure"){
+   if(jobType=="wsOH"){
       pure = true;
-      printf("   Job Type: pure H2O simulation, %d chromophores.\n",nchrom);
+      printf("   Job Type: pure H2O stretch simulation, %d chromophores.\n",nchrom);
+   }else if(jobType=="wsOD"){
+      pure = true;
+      printf("   Job Type: pure D2O stretch simulation, %d chromophores.\n",nchrom);
+   }else if(jobType=="wsiso"){
+      iso = true;
+      printf("   Job Type: Mixed H2O/D2O simulation, %d chromophores.\n",nchrom);
+      IsoMix();
    }else{
-      std::cout << " Error! " << jobType << " type of spectrum to calculate is not recognized ! " << std::endl;
+      printf(" Error! Type of spectrum to calculate is not recognized: %s. \n ",jobType.c_str());
       exit(EXIT_FAILURE);
    }
 
@@ -418,15 +424,121 @@ void water::updateEx()
   // diagonal
   int jj=0;
   for(int ii=0; ii<nchrom; ++ii){
-     hf[jj] = wm.getw01E(ef[ii]); 
+     hf[jj] = wms.getw01E(ef[ii]); 
      jj += nchrom-ii;
   }
 
   // NN coupling
   jj = 1; 
   for(int ii=0; ii<nchrom; ii+=2){
-     hf[jj] = wm.getcnn(ef[ii],ef[ii+1]);
+     hf[jj] = wms.getcnn(ef[ii],ef[ii+1]);
      jj += 2*(nchrom-ii)-1;
   }
   
+}
+
+void water::IsoMix()
+{
+//
+   printf("   Isotope mixed simulation. \n");
+   printf("   Equilibrium constant for H2O + D2O <-> 2HOD is %7.5f \n",kEqIsoW);
+
+   if(nd2o <= 0){
+     printf(" Error! Wrong number of D2O molecules: %d \n",nd2o);
+     exit(EXIT_FAILURE);
+   }
+
+   nh2o = nwater - nd2o;
+   printf("   Input: H2O / D2O =  %d / %d \n",nh2o,nd2o);
+
+   double sk, rt, x1, x2;
+   int x1i, x2i, xi, ntot;
+
+   sk = sqrt(kEqIsoW);
+   rt = kEqIsoW*nd2o*nd2o + 16.0*nd2o*nh2o - 2.0*kEqIsoW*nd2o*nh2o + kEqIsoW*nh2o*nh2o;
+
+   if(rt >=0 ){
+     rt = sqrt(rt);
+   }else{
+      printf(" Error in solve_isotops ! Sqrt %7.5f \n",rt);
+      printf(" Check number of H2O and D2O molecules! \n");
+      exit(EXIT_FAILURE);
+   }
+
+   x1 = (kEqIsoW*nd2o + kEqIsoW*nh2o - sk*rt)/(-8.0 + 2.0*kEqIsoW);
+   x2 = (kEqIsoW*nd2o + kEqIsoW*nh2o + sk*rt)/(-8.0 + 2.0*kEqIsoW);
+
+   x1i = rint(x1);
+   x2i = rint(x2);
+
+   if(x1i >= 0 && x1i <= nwater){
+      xi = x1i;
+   }else if(x2 >= 0 && x2i <= nwater){
+      xi = x2i;
+   }else{
+      printf(" Error! Could not solve an equilibrium problem in IsoMix ! \n");
+      exit(EXIT_FAILURE);
+   }
+   
+   // Calculate final number of molecules:
+   nh2o = nh2o - xi;
+   nd2o = nd2o - xi;
+   nhod = 2*xi;
+   
+   // Make sure we have not lost molecules due to rounding:
+   ntot = nh2o + nd2o + nhod;
+   if(ntot != nwater){
+      printf(" Error in solve_isotops ! Total number of molecules has changed! %d \n",ntot);
+      exit(EXIT_FAILURE);
+   }
+
+   printf("   Final: H2O / HOD / D2O mixture %d / %d / %d \n",nh2o,nhod,nd2o);
+
+   // determine which molecules are D2O, H2O, and HOD
+   vector<int> ovt(oxyInd);
+
+   random_device rd;
+   shuffle(ovt.begin(), ovt.end(), rd);
+
+   // assign water molecules to H2O, D2O, and HOD
+   for(int ii=0; ii<nh2o; ++ii)
+      mH2O.push_back(ovt[ii]);
+
+   for(int ii=0; ii<nd2o; ++ii)
+      mD2O.push_back(ovt[ii+nh2o]);
+  
+   for(int ii=0; ii<nhod; ++ii)
+      mHOD.push_back(ovt[ii+nh2o+nd2o]);
+
+   // for HOD we need to decide which hydroxyl is OH and which is OD
+   mt19937 rng(rd());
+   uniform_int_distribution<int> uni(1,2);
+
+   for(int ii=0; ii<nhod; ++ii)
+      woxyT.push_back(uni(rng));
+   
+}
+
+double water::waterTDC(const rvec &roha, const rvec &trda, const rvec &va, 
+                       const rvec &vb, const rvec &box)
+{
+//
+// Transition dipole coupling between 2 hydroxyl chromophores
+// of water 
+//
+   double dm, dm3, wc;
+   rvec rohb, trdb, ddv;
+
+   addRvec(va,vb,rohb,-1);
+   pbc(rohb,box);
+   unitv(rohb);
+   addRvec(vb,rohb,trdb,trdip);
+   pbc(trdb,box);
+   addRvec(trda,trdb,ddv,-1);
+   pbc(ddv,box);
+   dm = dist(ddv);
+   dm3 = dm*dm*dm;
+   unitv(ddv);
+   wc = au_to_wn*(dot(roha,rohb)-3.0*dot(roha,ddv)*dot(rohb,ddv))/dm3;
+   return wc;
 }

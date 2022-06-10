@@ -4,6 +4,8 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <random>
+#include <algorithm>
 #include "wmaps.h"
 #include "../traj/traj.h"
 #include "../vec/vecManip.h"
@@ -15,14 +17,14 @@ class water{
 
 public:
    water(string, string, int, string, string, string, string, string,
-         bool, bool, bool);
+         bool, bool, bool, int);
   ~water() {};
 
   int getNwatoms()       const { return atoms_in_mol; }
   string getWModelName() const { return water_model_name_caps; }
 
 private:
-  Wmap wm;
+  Wmap wms;
 
   int atoms_in_mol, atoms_in_mol_wm;
   int natoms;
@@ -32,6 +34,11 @@ private:
   int ndim;
 
   vector<int> oxyInd;
+  vector<int> mH2O;
+  vector<int> mD2O;
+  vector<int> mHOD;
+  vector<int> woxyT;
+
   vector<float> uChg;
   vector<float> aChg;
   vector<float> ef;
@@ -43,11 +50,13 @@ private:
   vector<float> plzbf;
 
   int now, nhw, nmw;
+  int nh2o, nd2o, nhod;
 
   bool ws;
   bool wb;
   bool wf;
-  bool pure;
+  bool pure = true;
+  bool iso = false;
   bool ir;
   bool raman;
   bool sfg;
@@ -57,7 +66,7 @@ private:
   float pz;
 
   string water_model_name, water_model_name_caps;
-  string OH_water_map_name;
+  string water_map_name;
   string traj_file;
   string chromType;
   string jobType;
@@ -73,6 +82,8 @@ private:
   void readGro();
   void readCharges();
   void updateEx();
+  void IsoMix();
+  double waterTDC(const rvec&, const rvec&, const rvec&, const rvec&, const rvec&);
 
 };
 

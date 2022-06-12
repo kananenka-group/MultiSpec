@@ -35,15 +35,16 @@ transition dipole and transition polarizability trajectories for IR, Raman, and 
 \item \textbf{stretch\_map}: (\texttt{string}) spectroscopic map for OH and OD stretch. The following maps have been implemented so far:
 \begin{itemize}
 \item F. Li and J. L. Skinner, J. Chem. Phys. 132, 244504 (2010), keyword: \texttt{skinner\_tip4p\_2010}
-\item S. M. Gruenbaum et al., J. Chem. Theory Comput. 9, 3109 (2013), keyword: \texttt{skinner\_tip4p\_2010}
+\item S. M. Gruenbaum et al., J. Chem. Theory Comput. 9, 3109 (2013), keyword: \texttt{skinner\_tip4p\_2013}
 \end{itemize}
-\item \textbf{chrom\_type}: (\texttt{string}) type of chromophore for which trajectories will be generated. Supported types:
-i) OH(OD) stretch, keyword: \texttt{ws}.
 
 \item \textbf{spec\_type}: (\texttt{string}) type of calculation that will be performed. Supported types: i) OH stretch, keyword: \texttt{wsOH},
-ii) OD stretch, keyword: \texttt{wsOD}, iii) hydroxyl stretch in water isotope mixtures, keyword: \texttt{wsiso}.
+ii) OD stretch, keyword: \texttt{wsOD}, iii) hydroxyl stretch in water isotope mixtures, keyword: \texttt{wsiso}; iv) OH-stretch fundamental-HOH bend overtone,
+keyword: \texttt{wswbH2O}.
 
 \item \textbf{D2O}: (\texttt{int}) the number of D$_2$O molecules mixed with H$_2$O. This is only required for \texttt{--spec\_type=wiso}.
+
+\item \textbf{Fc}: (\texttt{float}) OH-stretch fundamental-HOH bend overtone Fermi coupling. This is only required for \texttt{--spec\_type=wswbH2O}.
 
 \subsection{Examples}
 \begin{itemize}

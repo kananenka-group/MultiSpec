@@ -29,29 +29,6 @@ Exc::Exc(string h_file_name, string d_file_name, int nchr, int nt, double deltaT
    printf("     Input number of frames: %d \n",ntime);
    printf("     %d frames are needed to calculate spectra \n",nfrmn);
 
-   // Open files
-   hinfile.open(Hfile, ios::binary);
-   if(hinfile.fail()){
-      printf(" Error! Could not open file: %s \n",Hfile.c_str());
-      exit(EXIT_FAILURE);
-   }
-
-   if(ir) {
-      dinfile.open(Dfile, ios::binary);
-      if(dinfile.fail()){
-         printf(" Error! Could not open file: %s \n",Dfile.c_str());
-         exit(EXIT_FAILURE);
-      }
-   }
-
-   if(raman) {
-      pinfile.open(Pfile, ios::binary);
-      if(pinfile.fail()){
-         printf(" Error! Could not open file: %s \n",Pfile.c_str());
-         exit(EXIT_FAILURE);
-      }
-   }
-
 }
 
 void Exc::run()
@@ -73,8 +50,27 @@ void Exc::run()
 void Exc::Raman()
 {
    printf("\n** Raman module **\n");
+
+   // open input files
+   hinfile.open(Hfile, ios::binary);
+   if(hinfile.fail()){
+      printf(" Error! Could not open file: %s \n",Hfile.c_str());
+      exit(EXIT_FAILURE);
+   }
+   hinfile.clear();
+   hinfile.seekg(0, ios::beg);
+
+   pinfile.open(Pfile, ios::binary);
+   if(pinfile.fail()){
+      printf(" Error! Could not open file: %s \n",Pfile.c_str());
+      exit(EXIT_FAILURE);
+   }
+   pinfile.clear();
+   pinfile.seekg(0, ios::beg);
+
    printf("     Relaxation time: %7.5f [ps] \n",rlx_time);
 
+   // allocate memory
    plz_xx0.resize(nchrom);
    plz_xy0.resize(nchrom); 
    plz_xz0.resize(nchrom);
@@ -138,14 +134,37 @@ void Exc::Raman()
    printIw1D("vvw.dat", "VV", VVw);
    printIw1D("vhw.dat", "VH", VHw);
 
+   // close files:
+   pinfile.close();
+   hinfile.close();
+
 }
 
 void Exc::FTIR()
 {
 //
    printf("\n** FTIR module **\n");
+
+   // open dipole input file
+   hinfile.open(Hfile, ios::binary);
+   if(hinfile.fail()){
+      printf(" Error! Could not open file: %s \n",Hfile.c_str());
+      exit(EXIT_FAILURE);
+   }
+   hinfile.clear();
+   hinfile.seekg(0, ios::beg);
+
+   dinfile.open(Dfile, ios::binary);
+   if(dinfile.fail()){
+      printf(" Error! Could not open file: %s \n",Dfile.c_str());
+      exit(EXIT_FAILURE);
+   }
+   dinfile.clear();
+   dinfile.seekg(0, ios::beg);
+
    printf("     Relaxation time: %7.5f [ps] \n",rlx_time);
 
+   // allocate memory
    mu1_x.resize(nchrom);
    mu1_y.resize(nchrom);
    mu1_z.resize(nchrom);
@@ -185,6 +204,9 @@ void Exc::FTIR()
    printTCF1D("irt.dat", "IR", mR1D);
    printIw1D("irw.dat", "IR", IRw);
 
+   // close files:
+   dinfile.close();
+   hinfile.close();
 
 }
 
@@ -527,6 +549,8 @@ void Exc::calcRm(int ti)
 void Exc::fgrid1D()
 {
    wgrid1d.resize(NFFT);
+   fill_n(wgrid1d.begin(), NFFT, 0.0);
+
    for(int i=NFFT/2, j=0; i<NFFT; ++i, ++j)
        wgrid1d[j] = 2*M_PI*HBAR*(i-NFFT)/(dt*NFFT) + w_avg;
    

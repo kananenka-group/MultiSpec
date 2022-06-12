@@ -6,6 +6,8 @@
 #include <string>
 #include <random>
 #include <algorithm>
+#include <iterator> // begin, end, ostream_iterator
+#include <numeric>  // iota
 #include "wmaps.h"
 #include "../traj/traj.h"
 #include "../vec/vecManip.h"
@@ -33,6 +35,9 @@ private:
   int nchrom;
   int ndim;
 
+  const rvec *x;
+  rvec box;
+
   vector<int> oxyInd;
   vector<int> mH2O;
   vector<int> mD2O;
@@ -48,6 +53,11 @@ private:
   vector<float> tdmuf;
   vector<float> plzbt;
   vector<float> plzbf;
+
+  vector<float> w10;
+  vector<float> x10;
+  vector<float> p10;
+  vector<float> m10;
 
   int now, nhw, nmw;
   int nh2o, nd2o, nhod;
@@ -83,6 +93,8 @@ private:
   void readCharges();
   void updateEx();
   void IsoMix();
+  void calcEf();
+  void calcWXPM();
   double waterTDC(const rvec&, const rvec&, const rvec&, const rvec&, const rvec&);
 
 };

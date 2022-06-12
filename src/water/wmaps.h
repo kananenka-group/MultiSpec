@@ -32,6 +32,7 @@ public:
   float getx01E_OD(const float);
   float getp01E_OD(const float);
   float getcnn(const float, const float); 
+  float getcnn(const float, const float, const float,const float, const float, const float);
 
 private:
 

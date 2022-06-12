@@ -26,26 +26,18 @@ water::water(string wm_name, string ctype, int nfr, string wS_wmap_name, string 
    // and type of job
    waterJob();
 
-   // generate the Hamiltonian
-   rvec box;
-   const rvec *x;
-   rvec roh, rAH, rohs, roha; //, rohb;
-   rvec trda; //, trdb, ddv;
-   //float dm, dm3;
-   float ma, mb, xa, xb;
+   rvec roha, trda; 
 
    int ii, pp;
-   int tagH, thisA, Ok;
-   int eHl;
-   float doh, dah, dah3;
-
-   vector<float> eft;
-   eft.assign(3,0.0);
 
    ef.assign(nchrom,0.0);
 
    ndim = nchrom*(nchrom+1)/2;
    hf.resize(ndim);
+   w10.resize(nchrom);
+   x10.resize(nchrom);
+   p10.resize(nchrom);
+   m10.resize(nchrom);
 
    // transition dipoles
    tdmuf.resize(nchrom*3);
@@ -57,55 +49,15 @@ water::water(string wm_name, string ctype, int nfr, string wS_wmap_name, string 
    printf("\n** Generating Excitonic Hamiltonian for %d frames. **\n",nframes);
    int counter=0;
    // 
-   // case 1. hydroxyl stretch of water
-   // pure water no isotope mixtures
+   // case 1. Water hydroxyl stretch
    //
-   if(ws || pure){
+   if(ws){
       while(traj.next()==0 && counter<nframes) {
          x = traj.getCoords();
          traj.getBox(box);
-         for(int i=0;i<nwater;++i){
-            for(int j=1;j<3;++j){
-               eHl = 2*i+j-1;
-               tagH=oxyInd[i]+j;
-               addRvec(x[tagH],x[oxyInd[i]],rohs,-1);
-               pbc(rohs,box);
-               unitv(rohs);
-               fill(eft.begin(), eft.end(), 0.0);
-               for(int k=0;k<nwater;++k){
-                  if(i==k) continue;
-                  Ok = oxyInd[k];
-                  addRvec(x[Ok],x[tagH],roh,-1);
-                  pbc(roh,box);
-                  doh = dist(roh);
-                  if(doh>O_to_H_dist_water_cutoff)
-                     continue;
-                  for(int l=0; l<atoms_in_mol; ++l){
-                     thisA = oxyInd[k]+l;
-                     addRvec(x[tagH],x[thisA],rAH,-1);
-                     pbc(rAH,box);
-                     dah = dist(rAH);
-                     dah3 = dah*dah*dah;
-                     for(int m=0; m<3; ++m)
-                        eft[m] += rAH[m]*aChg[thisA]/dah3;
-                  }
-               }
-               // 
-               // Non-water
-               // 
-               //for(int m=0; m<3; ++m)
-               //   eft[m] += 0.0;
-               //
-               // calculate projection of e-field onto OH bond
-               //
-               ef[eHl] = 0.0;
-               for(int n=0; n<3; ++n)
-                  ef[eHl] += eft[n]*rohs[n];
-            }
-         }
-         // Calculate Matrix elements here:
+         calcEf();
+         calcWXPM();
          updateEx();
-
          // TD and TDC coupling
          ii=0;
          for(int i=0; i<nwater; ++i){
@@ -116,21 +68,19 @@ water::water(string wm_name, string ctype, int nfr, string wS_wmap_name, string 
                unitv(roha); 
                addRvec(x[oxyInd[i]],roha,trda,trdip);
                pbc(trda,box); 
-               ma = wms.getm01E(ef[2*i+k-1]);
-               xa = wms.getx01E(wms.getw01E(ef[2*i+k-1]));
                // transition dipole
                if(ir){
                   for(int kk=0; kk<3;++kk)
-                     tdmuf[3*(2*i+k-1)+kk] = roha[kk]*ma*xa;
+                     tdmuf[3*(2*i+k-1)+kk] = roha[kk]*m10[2*i+k-1]*x10[2*i+k-1];
                }
                // transition polarizability
                if(raman){
                   pp = 0;
                   for(int kk=0; kk<3;++kk){
-                     plzbf[6*(2*i+k-1)+pp] = (pz*roha[kk]*roha[kk]+1.0)*xa;
+                     plzbf[6*(2*i+k-1)+pp] = (pz*roha[kk]*roha[kk]+1.0)*x10[2*i+k-1]; 
                      pp+=1;
                      for(int ll=(kk+1); ll<3; ++ll){
-                        plzbf[6*(2*i+k-1)+pp] = pz*roha[kk]*roha[ll]*xa;
+                        plzbf[6*(2*i+k-1)+pp] = pz*roha[kk]*roha[ll]*x10[2*i+k-1]; 
                         pp+=1;
                      }
                   }
@@ -138,10 +88,8 @@ water::water(string wm_name, string ctype, int nfr, string wS_wmap_name, string 
                // Hamiltonian
                for(int j=(i+1); j<nwater; ++j){
                   for(int l=1;l<3;++l){
-                     mb = wms.getm01E(ef[2*j+l-1]);
-                     xb = wms.getx01E(wms.getw01E(ef[2*j+l-1]));
                      hf[ii] = waterTDC(roha, trda, x[oxyInd[j]+l], x[oxyInd[j]], box);
-                     hf[ii] *= ma*mb*xa*xb;
+                     hf[ii] *= m10[2*i+k-1]*m10[2*j+l-1]*x10[2*i+k-1]*x10[2*j+l-1];
                      ii++;
                   }
                }
@@ -154,16 +102,6 @@ water::water(string wm_name, string ctype, int nfr, string wS_wmap_name, string 
          if(raman) plzbt.insert(plzbt.end(), begin(plzbf), end(plzbf));
          counter++;
       }
-   }
-   ///////////////////////////////////////////////////////////////////////////////////////////////
-   //                                                                                           //
-   //  Case 2. Water hydroxyl stretch and isotope mixtures                                      //
-   //                                                                                           //
-   ///////////////////////////////////////////////////////////////////////////////////////////////
-   else if(ws || iso)
-   {
-
-
    }
 
    printf("\n** Writing Excitonic Hamiltonian into Hamiltonian.bin **\n");
@@ -424,14 +362,14 @@ void water::updateEx()
   // diagonal
   int jj=0;
   for(int ii=0; ii<nchrom; ++ii){
-     hf[jj] = wms.getw01E(ef[ii]); 
+     hf[jj] = w10[ii];
      jj += nchrom-ii;
   }
 
   // NN coupling
   jj = 1; 
   for(int ii=0; ii<nchrom; ii+=2){
-     hf[jj] = wms.getcnn(ef[ii],ef[ii+1]);
+     hf[jj] = wms.getcnn(ef[ii],x10[ii],p10[ii],ef[ii+1],x10[ii+1],p10[ii+1]);
      jj += 2*(nchrom-ii)-1;
   }
   
@@ -495,20 +433,25 @@ void water::IsoMix()
    printf("   Final: H2O / HOD / D2O mixture %d / %d / %d \n",nh2o,nhod,nd2o);
 
    // determine which molecules are D2O, H2O, and HOD
-   vector<int> ovt(oxyInd);
+   vector<int> ovt(oxyInd.size()); 
+   iota(ovt.begin(), ovt.end(), 0);
 
    random_device rd;
    shuffle(ovt.begin(), ovt.end(), rd);
 
    // assign water molecules to H2O, D2O, and HOD
+   mH2O.reserve(nh2o);
+   mD2O.reserve(nd2o);
+   mHOD.reserve(nhod);
+
    for(int ii=0; ii<nh2o; ++ii)
       mH2O.push_back(ovt[ii]);
 
-   for(int ii=0; ii<nd2o; ++ii)
-      mD2O.push_back(ovt[ii+nh2o]);
+   for(int ii=nh2o; ii<(nh2o+nd2o); ++ii)
+      mD2O.push_back(ovt[ii]);
   
-   for(int ii=0; ii<nhod; ++ii)
-      mHOD.push_back(ovt[ii+nh2o+nd2o]);
+   for(int ii=(nh2o+nd2o); ii<(nh2o+nd2o+nhod); ++ii)
+      mHOD.push_back(ovt[ii]);
 
    // for HOD we need to decide which hydroxyl is OH and which is OD
    mt19937 rng(rd());
@@ -541,4 +484,110 @@ double water::waterTDC(const rvec &roha, const rvec &trda, const rvec &va,
    unitv(ddv);
    wc = au_to_wn*(dot(roha,rohb)-3.0*dot(roha,ddv)*dot(rohb,ddv))/dm3;
    return wc;
+}
+
+void water::calcEf()
+{
+//
+// calculate electric field on all H atoms of water molecules
+//
+   int eHl, tagH, Ok, thisA;
+   rvec roh, rohs, rAH;
+   float doh, dah, dah3;
+
+   vector<float> eft;
+   eft.assign(3,0.0);
+
+   for(int i=0;i<nwater;++i){
+       for(int j=1;j<3;++j){
+          eHl = 2*i+j-1;
+          tagH=oxyInd[i]+j;
+          addRvec(x[tagH],x[oxyInd[i]],rohs,-1);
+          pbc(rohs,box);
+          unitv(rohs);
+          fill(eft.begin(), eft.end(), 0.0);
+          for(int k=0;k<nwater;++k){
+             if(i==k) continue;
+             Ok = oxyInd[k];
+             addRvec(x[Ok],x[tagH],roh,-1);
+             pbc(roh,box);
+             doh = dist(roh);
+             if(doh>O_to_H_dist_water_cutoff) continue;
+             for(int l=0; l<atoms_in_mol; ++l){
+                thisA = oxyInd[k]+l;
+                addRvec(x[tagH],x[thisA],rAH,-1);
+                pbc(rAH,box);
+                dah = dist(rAH);
+                dah3 = dah*dah*dah;
+                for(int m=0; m<3; ++m)
+                   eft[m] += rAH[m]*aChg[thisA]/dah3;
+             }
+          }
+          ef[eHl] = 0.0;
+          for(int n=0; n<3; ++n)
+             ef[eHl] += eft[n]*rohs[n];
+       }
+   }
+}
+
+void water::calcWXPM()
+{
+   int k;
+   if((jobType=="wsOH") || (jobType=="wsOD")){
+      for(int i=0;i<nchrom;++i){
+         w10[i] = wms.getw01E(ef[i]);
+         x10[i] = wms.getx01E(wms.getw01E(ef[i]));
+         p10[i] = wms.getp01E(wms.getw01E(ef[i]));
+         m10[i] = wms.getm01E(ef[i]);
+      }
+   }
+   else if(jobType=="wsiso"){
+      // assign OH
+      for(int i=0; i<nh2o; ++i){
+         for(int j=0; j<2; ++j){
+            k = 2*mH2O[i]+j;
+            w10[k] = wms.getw01E_OH(ef[k]);
+            x10[k] = wms.getx01E_OH(wms.getw01E_OH(ef[k]));
+            p10[k] = wms.getp01E_OH(wms.getw01E_OH(ef[k]));
+            m10[k] = wms.getm01E_OH(ef[k]);
+         }
+      }
+      // assign OD
+      for(int i=0; i<nd2o; ++i){
+         for(int j=0; j<2; ++j){
+            k = 2*mD2O[i]+j;
+            w10[k] = wms.getw01E_OD(ef[k]);
+            x10[k] = wms.getx01E_OD(wms.getw01E_OD(ef[k]));
+            p10[k] = wms.getp01E_OD(wms.getw01E_OD(ef[k]));
+            m10[k] = wms.getm01E_OD(ef[k]);
+         }
+      }
+      // assign HOD
+      for(int i=0; i<nhod; ++i){
+         if(woxyT[i] == 1){
+            k = 2*mHOD[i];
+            w10[k] = wms.getw01E_OD(ef[k]);
+            x10[k] = wms.getx01E_OD(wms.getw01E_OD(ef[k]));
+            p10[k] = wms.getp01E_OD(wms.getw01E_OD(ef[k]));
+            m10[k] = wms.getm01E_OD(ef[k]);
+            k = 2*mHOD[i]+1;
+            w10[k] = wms.getw01E_OH(ef[k]);
+            x10[k] = wms.getx01E_OH(wms.getw01E_OH(ef[k]));
+            p10[k] = wms.getp01E_OH(wms.getw01E_OH(ef[k]));
+            m10[k] = wms.getm01E_OH(ef[k]);
+         }else{
+            k = 2*mHOD[i]+1;
+            w10[k] = wms.getw01E_OD(ef[k]);
+            x10[k] = wms.getx01E_OD(wms.getw01E_OD(ef[k]));
+            p10[k] = wms.getp01E_OD(wms.getw01E_OD(ef[k]));
+            m10[k] = wms.getm01E_OD(ef[k]);
+            k = 2*mHOD[i];
+            w10[k] = wms.getw01E_OH(ef[k]);
+            x10[k] = wms.getx01E_OH(wms.getw01E_OH(ef[k]));
+            p10[k] = wms.getp01E_OH(wms.getw01E_OH(ef[k]));
+            m10[k] = wms.getm01E_OH(ef[k]);
+         }
+      }
+   }
+
 }

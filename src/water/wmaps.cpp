@@ -145,3 +145,11 @@ float Wmap::getcnn(const float Ei, const float Ej)
    wc = (emap.wij0 + emap.wije*(Ei + Ej))*xi*xj + emap.wijpp*pi*pj;
    return wc;
 }
+
+float Wmap::getcnn(const float ei, const float xi, const float pi,
+                   const float ej, const float xj, const float pj)
+{
+   double wc;
+   wc = (emap.wij0 + emap.wije*(ei + ej))*xi*xj + emap.wijpp*pi*pj;
+   return wc;
+} 

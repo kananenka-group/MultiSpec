@@ -15,6 +15,28 @@
 \date{\today}
 \maketitle
 
+\section{Exciton module}
+Exciton module is the main module that computes spectra. Currently only linear IR and Raman spectra are implemented.
+
+\subsection{Input parameters}
+
+\begin{itemize}
+\item \textbf{dt}: (\texttt{double}) time step between frames in ps.
+\item \textbf{tc}: (\texttt{double}) correlation time for 1D time-correlation functions.
+\item \textbf{H}: (\texttt{string}) name of the file containing Hamiltonian trajectory. 
+\item \textbf{D}: (\texttt{string}) name of the file containing transition dipole trajectory. 
+\item \textbf{P}: (\texttt{string}) name of the file containing transition polarizability trajectory. 
+\item \textbf{IR}: (\texttt{bool}) calculate linear IR spectra, options: \{1,0\}.
+\item \textbf{Raman}: (\texttt{bool}) calculate Raman spectra, options: \{1,0\}. This will calculate VV, VH, isotropic, and unpolarized Raman spectra.
+\item \textbf{nframes}: (\texttt{int}) how many frames are stored in trajectory files.
+\item \textbf{nchrom}: (\texttt{int}) total number of chromophores.
+\item \textbf{T1}: (\texttt{double}) T$_1$ time, life-time of the first exited state.
+\item \textbf{navg}: (\texttt{int}) the number of segments the input trajectories will be divided into and used for statistical averaging.
+\item \textbf{tsep}: (\texttt{double}) time separation in ps between segments.
+\item \textbf{w\_avg}: (\texttt{double}) average frequency (optional) helps mitigate numerical instabilities.
+
+\end{itemize}
+
 \section{Water module}
 Water module generates an input for the exciton module. The input consists of excitonic hamiltonian trajectory as well as 
 transition dipole and transition polarizability trajectories for IR, Raman, and SFG calculations.

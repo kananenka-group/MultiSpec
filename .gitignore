@@ -51,3 +51,4 @@
 *.log
 *.fdb_latexmk
 *.gz
+*.toc

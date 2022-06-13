@@ -14,6 +14,7 @@
 \author{Alexei A. Kananenka}
 \date{\today}
 \maketitle
+\tableofcontents
 
 \section{Exciton module}
 Exciton module is the main module that computes spectra. Currently only linear IR and Raman spectra are implemented.
@@ -56,14 +57,16 @@ transition dipole and transition polarizability trajectories for IR, Raman, and 
 \item \textbf{water\_model}: (\texttt{string}) water model. Supported water models: \texttt{TIP4P}.
 \item \textbf{stretch\_map}: (\texttt{string}) spectroscopic map for OH and OD stretch. The following maps have been implemented so far:
 \begin{itemize}
-\item F. Li and J. L. Skinner, J. Chem. Phys. 132, 244504 (2010), keyword: \texttt{skinner\_tip4p\_2010}
-\item S. M. Gruenbaum et al., J. Chem. Theory Comput. 9, 3109 (2013), keyword: \texttt{skinner\_tip4p\_2013}
+\item \texttt{li\_2010\_tip4p} from F. Li and J. L. Skinner, J. Chem. Phys. 132, 244504 (2010) 
+\item  \texttt{gruenbaum\_tip4p\_2013} from S. M. Gruenbaum et al., J. Chem. Theory Comput. 9, 3109 (2013)
 \end{itemize}
 
 \item \textbf{bend\_map}: (\texttt{string}) spectroscopic map for HOH and DOD bend. 
 The following maps have been implemented so far:
 \begin{itemize}
-\item Y. Ni and J. L. Skinner, J. Chem. Phys. 143, 014502 (2015), keyword: \texttt{skinner\_tip4p\_2015}
+\item \texttt{ni\_2015\_tip4p} from Y. Ni and J. L. Skinner, J. Chem. Phys. 143, 014502 (2015)
+\item  \texttt{ni\_2015\_kananenka\_2019\_tip4p} from Y. Ni and J. L. Skinner , J. Chem. Phys. 143, 014502 (2015) updated with HOD and D$_2$O 
+bending frequencies used in Kananenka \textit{et al.}, J. Phys. Chem. B 123, 5139-5146 (2019).
 \end{itemize}
 
 
@@ -71,11 +74,14 @@ The following maps have been implemented so far:
 ii) OD stretch, keyword: \texttt{wsOD}, iii) hydroxyl stretch in water isotope mixtures, keyword: \texttt{wsiso}; iv) OH-stretch fundamental-HOH bend overtone,
 keyword: \texttt{wswbH2O}.
 
-\item \textbf{D2O}: (\texttt{int}) the number of D$_2$O molecules mixed with H$_2$O. This is only required for \texttt{--spec\_type=wiso}.
+\item \textbf{D2O}: (\texttt{int}) the number of D$_2$O molecules mixed with H$_2$O. This is only required for \texttt{--spec\_type=wsiso}.
 
-\item \textbf{Fc}: (\texttt{float}) OH-stretch fundamental-HOH bend overtone Fermi coupling. This is only required for \texttt{--spec\_type=wswbH2O}.
+\item \textbf{Fc}: (\texttt{float}) OH-stretch fundamental-HOH bend overtone Fermi coupling. This is only required for \texttt{--spec\_type=wswbH2O}
+and \texttt{--spec\_type=wswbiso}.
 
-\subsection{Examples}
+\subsection{Spectroscopic maps}
+
+\section{Examples}
 \begin{itemize}
 
 \item Generate input files for FTIR calculation of pure H$_2$O:

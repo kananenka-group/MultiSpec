@@ -2,6 +2,7 @@ exe     = water_gen
 CXX     = g++
 
 SOFTDIR=/work/akanane/sw/MultiSpec/src/software/xdrfile/build
+BUILDIR=/work/akanane/sw/MultiSpec/build
 
 INC     = -I$(SOFTDIR)/include/xdrfile
 FLAGS   = -O2 -march=native -Wall -std=c++11 -MMD -MP -fopenmp -DUSEOMP
@@ -11,7 +12,7 @@ LIBDIRS = -L$(SOFTDIR)/lib
 
 #MMD and MP generate .d files
 OBJ_DIR = OBJ
-SRCS  = main.cpp input.cpp ../traj/traj.cpp wmaps.cpp water.cpp 
+SRCS  = main.cpp input.cpp ../traj/traj.cpp wmaps.cpp wmapb.cpp water.cpp 
 
 OBJS := $(SRCS:%.cpp=$(OBJ_DIR)/%.o)
 DEPS := $(OBJS:%.o=%.d)

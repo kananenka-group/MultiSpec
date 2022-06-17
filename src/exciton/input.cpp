@@ -21,7 +21,6 @@ Input::Input(int argc, char ** argv){
        ("H",      po::value<std::string>(&Hfile),      "Hamiltonian file")
        ("D",      po::value<std::string>(&Dfile),      "Dipole file")
        ("P",      po::value<std::string>(&Pfile),      "Polarizability file")
-       ("nchrom", po::value<int>(&nchrom),             "Number of chromophores")
        ("nframes",po::value<int>(&nframe),             "Number of frames to read")
        ("navg",   po::value<int>(&navg),               "Trajectories for statistical averaging")
        ("IR",     po::value<bool>(&ir),                "Calculate linear IR spectrum")
@@ -48,6 +47,25 @@ Input::Input(int argc, char ** argv){
         cerr << "Exception of unknown type!\n";
         exit(EXIT_FAILURE);
     }
+
+    //
+    // read parameters from job file
+    //
+    jobfile.open(Jfile, ios::binary | ios::in);
+    if(jobfile.fail()){
+      printf(" Error! Could not job file: %s.\n",Jfile.c_str());
+      printf("        Please generate input data by running one of the modules first. \n");
+      exit(EXIT_FAILURE);
+   }
+   jobfile.clear();
+   jobfile.seekg(0, ios::beg);
+
+   printf("\n** Reading parameters from previous calculation.**\n");
+   jobfile.read(reinterpret_cast<char*>(&nchrom), sizeof(int));
+   jobfile.close();
+
+   // print:
+   printf("     Number of chromophores: %d \n",nchrom);
 
 }
 

@@ -52,6 +52,9 @@ private:
   string Hfile = "Hamiltonian.bin";
   string Dfile = "Dipole.bin";
   string Pfile = "Polarizability.bin";
+  string Jfile = "job.bin";
+
+  ifstream jobfile;
 
 
 };

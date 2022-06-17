@@ -18,10 +18,10 @@ int main(int argc, char ** argv){
    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 
    // create and run simulation
-   water S (input.getWaterModel(), input.getChromType(), input.getNFrames(), 
-            input.getwSMap(), input.getJobType(), input.getTrajFile(), 
+   water S (input.getWaterModel(), input.getNFrames(), input.getwSMap(), 
+            input.getwBMap(), input.getJobType(), input.getTrajFile(), 
             input.getGroFile(), input.getChgFile(), input.ifIR(), input.ifRaman(),
-            input.ifSFG(), input.getND2O());
+            input.ifSFG(), input.getND2O(), input.getFc());
 
    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
    

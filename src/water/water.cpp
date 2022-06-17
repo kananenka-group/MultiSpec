@@ -1,12 +1,14 @@
 #include "water.h"
 
-water::water(string wm_name, string ctype, int nfr, string wS_wmap_name, string job_type,
-             string traj_file_name, string gro_file_name, string charge_file_name, 
-             bool doir, bool doraman, bool dosfg, int d2o) :
-             water_model_name(wm_name), chromType(ctype), nframes(nfr), 
+water::water(string wm_name, int nfr, string wS_wmap_name, string wB_map_name, 
+             string job_type, string traj_file_name, string gro_file_name, 
+             string charge_file_name, bool doir, bool doraman, bool dosfg, 
+             int d2o, float fermi_c) : 
+             water_model_name(wm_name), nframes(nfr), 
              jobType(job_type), traj_file(traj_file_name), gro_file(gro_file_name), 
-             chg_file(charge_file_name), wms(wS_wmap_name, job_type),
-             ir(doir), raman(doraman), sfg(dosfg), nd2o(d2o)
+             chg_file(charge_file_name), wms(wS_wmap_name, job_type), 
+             wmb(wB_map_name, job_type), ir(doir), raman(doraman), sfg(dosfg), 
+             nd2o(d2o), fc(fermi_c)
 {
    // create trajectory object
    Traj traj(traj_file.c_str());
@@ -20,113 +22,84 @@ water::water(string wm_name, string ctype, int nfr, string wS_wmap_name, string 
    // create water model
    waterModel();
 
-   // find out the type of chromphore
-   waterChrom(); 
-
    // and type of job
    waterJob();
 
-   rvec roha, trda; 
+   // allocate memory
+   nchromt = nchroms + nchromb;
+   nchromt2=nchromt*nchromt;
 
-   int ii, pp;
+   hf.resize(nchromt2,0.0);
+   w10.resize(nchroms,0.0);
+   x10.resize(nchroms,0.0);
+   p10.resize(nchroms,0.0);
+   m10.resize(nchroms,0.0);
+   efs.resize(nchroms,0.0);
+   efb.resize(nchromb,0.0);
+   ROH.resize(nchroms,0.0);
+   w20b.resize(nchromb,0.0);
+   tdmuf.resize(nchromt*3,0.0);
+   plzbf.resize(nchromt*6,0.0);
 
-   ef.assign(nchrom,0.0);
-
-   ndim = nchrom*(nchrom+1)/2;
-   hf.resize(ndim);
-   w10.resize(nchrom);
-   x10.resize(nchrom);
-   p10.resize(nchrom);
-   m10.resize(nchrom);
-
-   // transition dipoles
-   tdmuf.resize(nchrom*3);
-
-   // transition polarizabilities
-   plzbf.resize(nchrom*6);
+   // 
    pz = bond_plz_ratio-1.0;
+
+   // open output files... 
+   houtfile.open("Hamiltonian.bin", ios::binary | ios::out);
+   jobfile.open("job.bin", ios::binary | ios::out);
+   if(ir) doutfile.open("Dipole.bin", ios::binary | ios::out);
+   if(raman) poutfile.open("Polarizability.bin", ios::binary | ios::out);
+
+   vOHa = new rvec[nchroms];
+   vOHu = new rvec[nchroms];
+   eft  = new rvec[nchroms];
 
    printf("\n** Generating Excitonic Hamiltonian for %d frames. **\n",nframes);
    int counter=0;
-   // 
-   // case 1. Water hydroxyl stretch
+
+   if(ws || wf){
+   //////////////////////////////////////////////////////////////////////////////////////
    //
-   if(ws){
+   // Case 1. Stretch fundamental (and bend overtone).
+   //
+   //////////////////////////////////////////////////////////////////////////////////////
       while(traj.next()==0 && counter<nframes) {
          x = traj.getCoords();
          traj.getBox(box);
          calcEf();
          calcWXPM();
          updateEx();
-         // TD and TDC coupling
-         ii=0;
-         for(int i=0; i<nwater; ++i){
-            for(int k=1;k<3;++k){
-               ii += 3-k;
-               addRvec(x[oxyInd[i]+k],x[oxyInd[i]],roha,-1);
-               pbc(roha,box);
-               unitv(roha); 
-               addRvec(x[oxyInd[i]],roha,trda,trdip);
-               pbc(trda,box); 
-               // transition dipole
-               if(ir){
-                  for(int kk=0; kk<3;++kk)
-                     tdmuf[3*(2*i+k-1)+kk] = roha[kk]*m10[2*i+k-1]*x10[2*i+k-1];
-               }
-               // transition polarizability
-               if(raman){
-                  pp = 0;
-                  for(int kk=0; kk<3;++kk){
-                     plzbf[6*(2*i+k-1)+pp] = (pz*roha[kk]*roha[kk]+1.0)*x10[2*i+k-1]; 
-                     pp+=1;
-                     for(int ll=(kk+1); ll<3; ++ll){
-                        plzbf[6*(2*i+k-1)+pp] = pz*roha[kk]*roha[ll]*x10[2*i+k-1]; 
-                        pp+=1;
-                     }
-                  }
-               }
-               // Hamiltonian
-               for(int j=(i+1); j<nwater; ++j){
-                  for(int l=1;l<3;++l){
-                     hf[ii] = waterTDC(roha, trda, x[oxyInd[j]+l], x[oxyInd[j]], box);
-                     hf[ii] *= m10[2*i+k-1]*m10[2*j+l-1]*x10[2*i+k-1]*x10[2*j+l-1];
-                     ii++;
-                  }
-               }
-            }
-         }
-  
-         // update excitonic Hamiltonian and dipole derivtv
-         ht.insert(ht.end(), begin(hf), end(hf));
-         if(ir) tdmut.insert(tdmut.end(), begin(tdmuf), end(tdmuf));
-         if(raman) plzbt.insert(plzbt.end(), begin(plzbf), end(plzbf));
+         intermC();
+         if(ir) trDip();
+         if(raman) trPol();
+         writeH();
+         if(ir) writeD(); 
+         if(raman) writeP(); 
          counter++;
       }
    }
+   //////////////////////////////////////////////////////////////////////////////////////
+   //
+   // Case 2. Isolated OH stretching vibration, HOD/D2O, HOD/H2O infinite dilute limit, etc.
+   //
+   //////////////////////////////////////////////////////////////////////////////////////
 
-   printf("\n** Writing Excitonic Hamiltonian into Hamiltonian.bin **\n");
-   ofstream houtfile;
-   houtfile.open("Hamiltonian.bin", ios::binary | ios::out);
-   houtfile.write(reinterpret_cast<char*>(&ht[0]), ht.size()*sizeof(float));
-   houtfile.close();
+   //////////////////////////////////////////////////////////////////////////////////////
+   //
+   // Case 3. Coupled bending vibration
+   //
+   //////////////////////////////////////////////////////////////////////////////////////
+
+   // write a temporary file for passing some info for subsequent job
+   jobfile.write(reinterpret_cast<char*>(&nchromt), sizeof(int));
 
 
-   if(ir){
-      printf("\n** Writing transition dipole moment trajectory into Dipole.bin **\n");
-      ofstream doutfile;
-      doutfile.open("Dipole.bin", ios::binary | ios::out);
-      doutfile.write(reinterpret_cast<char*>(&tdmut[0]), tdmut.size()*sizeof(float));
-      doutfile.close();
-   }
+}
 
-   if(raman){
-      printf("\n** Writing transition polarizability trajectory into Polarizability.bin **\n");
-      ofstream poutfile;
-      poutfile.open("Polarizability.bin", ios::binary | ios::out);
-      poutfile.write(reinterpret_cast<char*>(&plzbt[0]), plzbt.size()*sizeof(float));
-      poutfile.close();
-   }
-
+water::~water() {
+  delete [] vOHa;
+  delete [] vOHu;
+  delete [] eft;
 }
 
 void water::waterModel()
@@ -137,7 +110,6 @@ void water::waterModel()
    if(water_model_name=="TIP4P" || water_model_name=="tip4p"){
       printf("   Water model : TIP4P [ W. L. Jorgensen et al., J. Chem. Phys. 79, 926-935 (1983) ]\n");
       water_model_name_caps = "TIP4P";
-      atoms_in_mol_wm = 4;
       trdip = 0.67*A0;
    }else{
       // SPC/E trdip = 0.58 Angstrom
@@ -148,63 +120,58 @@ void water::waterModel()
 
 }
 
-void water::waterChrom()
-{
+void water::waterJob(){
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Decide what type of job is requested and set up some variables
+//
+/////////////////////////////////////////////////////////////////////////////////////////
    ws = false;
    wb = false;
    wf = false;
+   uncs = false;
 
-   printf("\n** Reading chromophore type **\n");
-
-   if(chromType=="ws"){
-      printf("   Chromophore: water hydroxyl stretch \n");
-      ws = true;
-      nchrom = 2*nwater;
-   }else if(chromType=="wb"){
-      printf("   Chromophore: water bend \n");
-      wb = true;
-      nchrom = nwater;
-   }else if(chromType=="ws+wb"){
-      printf("   Chromophore: water hydroxyl stretch + bend (with Fermi resonance)\n");
-      wf = true;
-      nchrom = 3*nwater;
-   }else{
-      printf(" Error: %s type of chromophore is not recognized ! \n",chromType.c_str());
-      exit(EXIT_FAILURE);
-   }
-}
-
-void water::waterJob()
-{
    printf("\n** Reading job type ** \n");
    if(jobType=="wsOH"){
-      pure = true;
-      printf("   Job Type: pure H2O stretch simulation, %d chromophores.\n",nchrom);
+      ws = true;
+      nchroms = 2*nwater;
+      offs = 2;
+      printf("   Job Type: pure H2O stretch simulation, %d chromophores.\n",nchroms);
    }else if(jobType=="wsOD"){
-      pure = true;
-      printf("   Job Type: pure D2O stretch simulation, %d chromophores.\n",nchrom);
+      ws = true;
+      nchroms = 2*nwater;
+      offs = 2;
+      printf("   Job Type: pure D2O stretch simulation, %d chromophores.\n",nchroms);
    }else if(jobType=="wsiso"){
-      iso = true;
-      printf("   Job Type: Mixed H2O/D2O simulation, %d chromophores.\n",nchrom);
+      ws = true;
+      nchroms = 2*nwater;
+      offs = 2;
+      printf("   Job Type: Mixed H2O/D2O simulation, %d chromophores.\n",nchroms);
       IsoMix();
+   }else if(jobType=="wswbH2O"){
+      wf = true;
+      nchroms = 2*nwater;
+      nchromb = nwater;
+      offs = 3;
+      printf("   Job Type: pure H2O stretch fundamental-bend overtone simulation.\n"); 
+      printf("             %d OH chromophores, %d HOH chromophores \n",nchroms,nchromb);
+      printf("             Fermi coupling = %7.5f [cm-1] \n",fc);
    }else{
       printf(" Error! Type of spectrum to calculate is not recognized: %s. \n ",jobType.c_str());
       exit(EXIT_FAILURE);
    }
 
-
 }
 
-void water::readGro()
-{
-/* 
- *
- * Reading gro file and learning the types of atoms in the system
- *
- */
+void water::readGro(){
+///////////////////////////////////////////////////////////////////////////////////////// 
+//
+// Reading gro file and learning the types of atoms in the system
+//
+/////////////////////////////////////////////////////////////////////////////////////////
    ifstream file(gro_file);
 
-   if (!file.good()) {
+   if(!file.good()){
       printf(" ERROR: gromacs file %s cannot be read.\n",gro_file.c_str());
       exit(EXIT_FAILURE);
    }
@@ -292,7 +259,9 @@ void water::readGro()
    printf("   Number of water molecules: %d \n",nwater);   
 
    if(natoms!=(now+nhw+nmw)){
-      printf(" ERROR: The number of OW+HW+MW atoms does not add up \n to the total number of atoms read from %s \n at this time only pure water can be simulated.\n",gro_file.c_str());
+      printf(" ERROR: The number of OW+HW+MW atoms does not add up \n"); 
+      printf("        to the total number of atoms read from %s at \n",gro_file.c_str());
+      printf("        this time only pure water can be simulated.\n");
       exit(EXIT_FAILURE);
    }else{
       printf("   It looks like the system is pure water.\n");
@@ -353,26 +322,6 @@ void water::readCharges()
 
    printf("   Total charge of the system = %5.3f \n",total_charge);
 
-}
-
-void water::updateEx()
-{
-  hf.assign(ndim,0.0);   
-
-  // diagonal
-  int jj=0;
-  for(int ii=0; ii<nchrom; ++ii){
-     hf[jj] = w10[ii];
-     jj += nchrom-ii;
-  }
-
-  // NN coupling
-  jj = 1; 
-  for(int ii=0; ii<nchrom; ii+=2){
-     hf[jj] = wms.getcnn(ef[ii],x10[ii],p10[ii],ef[ii+1],x10[ii+1],p10[ii+1]);
-     jj += 2*(nchrom-ii)-1;
-  }
-  
 }
 
 void water::IsoMix()
@@ -486,108 +435,288 @@ double water::waterTDC(const rvec &roha, const rvec &trda, const rvec &va,
    return wc;
 }
 
-void water::calcEf()
-{
-//
-// calculate electric field on all H atoms of water molecules
-//
-   int eHl, tagH, Ok, thisA;
-   rvec roh, rohs, rAH;
-   float doh, dah, dah3;
-
-   vector<float> eft;
-   eft.assign(3,0.0);
-
-   for(int i=0;i<nwater;++i){
-       for(int j=1;j<3;++j){
-          eHl = 2*i+j-1;
-          tagH=oxyInd[i]+j;
-          addRvec(x[tagH],x[oxyInd[i]],rohs,-1);
-          pbc(rohs,box);
-          unitv(rohs);
-          fill(eft.begin(), eft.end(), 0.0);
-          for(int k=0;k<nwater;++k){
-             if(i==k) continue;
-             Ok = oxyInd[k];
-             addRvec(x[Ok],x[tagH],roh,-1);
-             pbc(roh,box);
-             doh = dist(roh);
-             if(doh>O_to_H_dist_water_cutoff) continue;
-             for(int l=0; l<atoms_in_mol; ++l){
-                thisA = oxyInd[k]+l;
-                addRvec(x[tagH],x[thisA],rAH,-1);
-                pbc(rAH,box);
-                dah = dist(rAH);
-                dah3 = dah*dah*dah;
-                for(int m=0; m<3; ++m)
-                   eft[m] += rAH[m]*aChg[thisA]/dah3;
-             }
-          }
-          ef[eHl] = 0.0;
-          for(int n=0; n<3; ++n)
-             ef[eHl] += eft[n]*rohs[n];
-       }
-   }
-}
-
 void water::calcWXPM()
 {
    int k;
-   if((jobType=="wsOH") || (jobType=="wsOD")){
-      for(int i=0;i<nchrom;++i){
-         w10[i] = wms.getw01E(ef[i]);
-         x10[i] = wms.getx01E(wms.getw01E(ef[i]));
-         p10[i] = wms.getp01E(wms.getw01E(ef[i]));
-         m10[i] = wms.getm01E(ef[i]);
+   if(jobType=="wsOH" || jobType=="wsOD" || jobType=="wswbH2O" || jobType=="wswbD2O"){
+      for(int i=0;i<nchroms;++i){
+         w10[i] = wms.getw01E(efs[i]);
+         x10[i] = wms.getx01E(wms.getw01E(efs[i]));
+         p10[i] = wms.getp01E(wms.getw01E(efs[i]));
+         m10[i] = wms.getm01E(efs[i]);
       }
    }
-   else if(jobType=="wsiso"){
+   else if(jobType=="wsiso" || jobType=="wswbiso"){
       // assign OH
       for(int i=0; i<nh2o; ++i){
          for(int j=0; j<2; ++j){
             k = 2*mH2O[i]+j;
-            w10[k] = wms.getw01E_OH(ef[k]);
-            x10[k] = wms.getx01E_OH(wms.getw01E_OH(ef[k]));
-            p10[k] = wms.getp01E_OH(wms.getw01E_OH(ef[k]));
-            m10[k] = wms.getm01E_OH(ef[k]);
+            w10[k] = wms.getw01E_OH(efs[k]);
+            x10[k] = wms.getx01E_OH(wms.getw01E_OH(efs[k]));
+            p10[k] = wms.getp01E_OH(wms.getw01E_OH(efs[k]));
+            m10[k] = wms.getm01E_OH(efs[k]);
          }
       }
       // assign OD
       for(int i=0; i<nd2o; ++i){
          for(int j=0; j<2; ++j){
             k = 2*mD2O[i]+j;
-            w10[k] = wms.getw01E_OD(ef[k]);
-            x10[k] = wms.getx01E_OD(wms.getw01E_OD(ef[k]));
-            p10[k] = wms.getp01E_OD(wms.getw01E_OD(ef[k]));
-            m10[k] = wms.getm01E_OD(ef[k]);
+            w10[k] = wms.getw01E_OD(efs[k]);
+            x10[k] = wms.getx01E_OD(wms.getw01E_OD(efs[k]));
+            p10[k] = wms.getp01E_OD(wms.getw01E_OD(efs[k]));
+            m10[k] = wms.getm01E_OD(efs[k]);
          }
       }
       // assign HOD
       for(int i=0; i<nhod; ++i){
          if(woxyT[i] == 1){
             k = 2*mHOD[i];
-            w10[k] = wms.getw01E_OD(ef[k]);
-            x10[k] = wms.getx01E_OD(wms.getw01E_OD(ef[k]));
-            p10[k] = wms.getp01E_OD(wms.getw01E_OD(ef[k]));
-            m10[k] = wms.getm01E_OD(ef[k]);
+            w10[k] = wms.getw01E_OD(efs[k]);
+            x10[k] = wms.getx01E_OD(wms.getw01E_OD(efs[k]));
+            p10[k] = wms.getp01E_OD(wms.getw01E_OD(efs[k]));
+            m10[k] = wms.getm01E_OD(efs[k]);
             k = 2*mHOD[i]+1;
-            w10[k] = wms.getw01E_OH(ef[k]);
-            x10[k] = wms.getx01E_OH(wms.getw01E_OH(ef[k]));
-            p10[k] = wms.getp01E_OH(wms.getw01E_OH(ef[k]));
-            m10[k] = wms.getm01E_OH(ef[k]);
+            w10[k] = wms.getw01E_OH(efs[k]);
+            x10[k] = wms.getx01E_OH(wms.getw01E_OH(efs[k]));
+            p10[k] = wms.getp01E_OH(wms.getw01E_OH(efs[k]));
+            m10[k] = wms.getm01E_OH(efs[k]);
          }else{
             k = 2*mHOD[i]+1;
-            w10[k] = wms.getw01E_OD(ef[k]);
-            x10[k] = wms.getx01E_OD(wms.getw01E_OD(ef[k]));
-            p10[k] = wms.getp01E_OD(wms.getw01E_OD(ef[k]));
-            m10[k] = wms.getm01E_OD(ef[k]);
+            w10[k] = wms.getw01E_OD(efs[k]);
+            x10[k] = wms.getx01E_OD(wms.getw01E_OD(efs[k]));
+            p10[k] = wms.getp01E_OD(wms.getw01E_OD(efs[k]));
+            m10[k] = wms.getm01E_OD(efs[k]);
             k = 2*mHOD[i];
-            w10[k] = wms.getw01E_OH(ef[k]);
-            x10[k] = wms.getx01E_OH(wms.getw01E_OH(ef[k]));
-            p10[k] = wms.getp01E_OH(wms.getw01E_OH(ef[k]));
-            m10[k] = wms.getm01E_OH(ef[k]);
+            w10[k] = wms.getw01E_OH(efs[k]);
+            x10[k] = wms.getx01E_OH(wms.getw01E_OH(efs[k]));
+            p10[k] = wms.getp01E_OH(wms.getw01E_OH(efs[k]));
+            m10[k] = wms.getm01E_OH(efs[k]);
          }
       }
    }
 
+   // bend stuff
+   if(jobType=="wswbH2O" || jobType=="wswbD2O"){
+      for(int i=0;i<nchromb;++i)
+         w20b[i] = wmb.getw02E(efb[i]);
+   }else if(jobType=="wswbiso"){
+      // H2O molecules
+      for(int i=0; i<nh2o; ++i){
+         k = mH2O[i];
+         w20b[k] = wmb.getw01E_HOH(efb[k]) + wmb.getw12E_HOH(efb[k]);
+      }
+      // D2O molecules
+      for(int i=0; i<nd2o; ++i){
+         k = mD2O[i];
+         w20b[k] = wmb.getw01E_DOD(efb[k]) + wmb.getw12E_DOD(efb[k]);
+      }
+      // HOD molecules
+      for(int i=0; i<nhod; ++i){
+         k = mHOD[i];
+         w20b[k] = wmb.getw01E_HOD(efb[k]) + wmb.getw12E_HOD(efb[k]);
+      }
+   }
+
 }
+
+void water::intermC(){
+///////////////////////////////////////////////////////////////////////
+//
+//  Calculate intermolecular couplings and update excitonic Hamiltonian
+//
+///////////////////////////////////////////////////////////////////////
+
+  rvec roha, trda;
+
+  for(int i=0; i<nwater; ++i){
+     for(int k=1;k<3;++k){
+        addRvec(x[oxyInd[i]+k],x[oxyInd[i]],roha,-1);
+        pbc(roha,box);
+        unitv(roha); 
+        addRvec(x[oxyInd[i]],roha,trda,trdip);
+        pbc(trda,box); 
+        // Hamiltonian
+        for(int j=(i+1); j<nwater; ++j){
+           for(int l=1;l<3;++l){
+              hf[nchromt*(offs*i+k-1)+offs*j+l-1] = waterTDC(roha, trda, x[oxyInd[j]+l], x[oxyInd[j]], box);
+              hf[nchromt*(offs*i+k-1)+offs*j+l-1] *= m10[2*i+k-1]*m10[2*j+l-1]*x10[2*i+k-1]*x10[2*j+l-1];
+           }
+        }
+     }
+  }
+  
+}
+
+void water::trDip()
+{
+   rvec out;
+   float scl;
+   fill_n(tdmuf.begin(), 3*nchromt, 0.0);
+
+   for(int n=0; n<nwater; ++n){
+      for(int m=0; m<2; ++m){
+         scl = m10[2*n+m]*x10[2*n+m];
+         sclRvec(vOHa[2*n+m], out, scl);
+         copyRRvec(&tdmuf[3*(offs*n+m)], out);
+      }
+   }
+
+   // Zero strength for bend overtones 
+   if(wf)
+      for(int n=0; n<nwater; ++n)
+         tdmuf[3*(offs*n+2)] = 0.0;
+   
+}
+
+void water::trPol()
+{
+   vector<float> out(6,0.0);
+   fill_n(plzbf.begin(), 6*nchromt, 0.0);
+
+   for(int n=0; n<nwater; ++n){
+      for(int m=0; m<2; ++m){
+         OuterRvec(&out[0], vOHa[2*n+m]);
+         plzbf[6*(offs*n+m)]   = (pz*out[0] + 1.0)*x10[2*n+m];
+         plzbf[6*(offs*n+m)+1] = pz*out[1]*x10[2*n+m];
+         plzbf[6*(offs*n+m)+2] = pz*out[2]*x10[2*n+m];
+         plzbf[6*(offs*n+m)+3] = (pz*out[3] + 1.0)*x10[2*n+m];
+         plzbf[6*(offs*n+m)+4] = pz*out[4]*x10[2*n+m];
+         plzbf[6*(offs*n+m)+5] = (pz*out[5] + 1.0)*x10[2*n+m];
+      }
+   }
+
+   // Zero strength for bend overtone
+   if(wf){
+      for(int n=0; n<nwater; ++n){
+         plzbf[6*(offs*n+2)]   = 0.0;
+         plzbf[6*(offs*n+2)+1] = 0.0;
+         plzbf[6*(offs*n+2)+2] = 0.0;
+         plzbf[6*(offs*n+2)+3] = 0.0;
+         plzbf[6*(offs*n+2)+4] = 0.0;
+         plzbf[6*(offs*n+2)+5] = 0.0;
+      }
+   }
+
+}
+
+void water::writeH()
+{
+  int jj = 0;
+  int pr_size;
+  pr_size = nchromt;
+  for(int ii=0; ii<nchromt; ++ii){
+     jj = ii*nchromt+ii;
+     houtfile.write(reinterpret_cast<char*>(&hf[jj]), pr_size*sizeof(float));
+     pr_size -= 1;
+  }
+}
+
+void water::writeD()
+{ doutfile.write(reinterpret_cast<char*>(&tdmuf[0]), (3*nchromt)*sizeof(float)); }
+
+void water::writeP()
+{ poutfile.write(reinterpret_cast<char*>(&plzbf[0]), (6*nchromt)*sizeof(float)); }
+
+void water::calcEf(){
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Calculate electric field on all H atoms; for OH stretch and HOH bend
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+   int eHl, tagH, Ok, thisA;
+   rvec roh, rohs, rAH;
+   rvec vp, tmp1, tmp2;
+   float doh, dah, dah3, scla;
+
+   fill_n(ROH.begin(), nchroms, 0.0);
+   fill_n(efs.begin(), nchroms, 0.0);
+
+   for(int n=0; n<nchroms; ++n)
+      setRvec(eft[n], 0.0);
+
+   for(int i=0;i<nwater;++i){
+      for(int j=1;j<3;++j){
+         eHl = 2*i+j-1;
+         tagH=oxyInd[i]+j;
+         addRvec(x[tagH],x[oxyInd[i]],rohs,-1);
+         pbc(rohs,box);
+         ROH[eHl] = dist(rohs);
+         copyRvec(rohs,vOHu[eHl]);
+         unitv(rohs);
+         copyRvec(rohs,vOHa[eHl]);
+         for(int k=0;k<nwater;++k){
+            if(i==k) continue;
+            Ok = oxyInd[k];
+            addRvec(x[Ok],x[tagH],roh,-1);
+            pbc(roh,box);
+            doh = dist(roh);
+            if(doh>O_to_H_dist_water_cutoff) continue;
+            for(int l=0; l<atoms_in_mol; ++l){
+               thisA = oxyInd[k]+l;
+               addRvec(x[tagH],x[thisA],rAH,-1);
+               pbc(rAH,box);
+               dah = dist(rAH);
+               dah3 = dah*dah*dah;
+               scla = aChg[thisA]/dah3;
+               addRvec(rAH, eft[eHl], scla);
+            }
+         }
+         efs[eHl] = dot(eft[eHl], rohs);
+      }
+   }
+   
+   if(wb || wf){
+      fill_n(efb.begin(), nchromb, 0.0);
+
+      for(int n=0; n<nwater; ++n){
+         cross(vOHu[2*n], vOHu[2*n+1], vp);
+         unitv(vp);      
+         cross(vp, vOHu[2*n], tmp1);
+         cross(vOHu[2*n+1], vp, tmp2);
+         efb[n] = dot(tmp1, eft[2*n])/ROH[2*n] + dot(tmp2, eft[2*n+1])/ROH[2*n+1]; 
+      }
+   }
+
+}
+
+void water::updateEx(){
+//////////////////////////////////////////////////////////////////////////////////////
+//
+// Add diagonal elements of exciton Hamiltonian and intramolecular couplings 
+//
+//////////////////////////////////////////////////////////////////////////////////////
+
+  int ij;
+
+  fill_n(hf.begin(), nchromt2, 0.0);
+
+  // diagonal...
+  for(int ii=0; ii<nwater; ++ii){
+     ij = offs*ii;
+     hf[ij*nchromt+ij] = w10[2*ii];
+     ij = offs*ii + 1;
+     hf[ij*nchromt+ij] = w10[2*ii+1];
+  }
+
+  // bend overtone
+  if(wf)
+     for(int ii=0; ii<nwater; ++ii)
+        hf[nchromt*(3*ii+2) + 3*ii+2]  = w20b[ii];
+
+  // intramolecular coupling...
+  for(int ii=0; ii<nwater; ++ii){
+     ij = offs*ii;
+     hf[ij*nchromt+ij+1] = wms.getcnn(efs[2*ii],x10[2*ii],p10[2*ii],
+                                      efs[2*ii+1],x10[2*ii+1],p10[2*ii+1]);
+  }
+
+  // Fermi coupling
+  if(wf){ 
+     for(int ii=0; ii<nwater; ++ii){
+        hf[3*ii*nchromt+3*ii+2] = fc;
+        hf[(3*ii+1)*nchromt+(3*ii+1)+1] = fc;
+     }
+  }
+
+}
+

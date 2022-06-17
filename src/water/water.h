@@ -9,6 +9,7 @@
 #include <iterator> // begin, end, ostream_iterator
 #include <numeric>  // iota
 #include "wmaps.h"
+#include "wmapb.h"
 #include "../traj/traj.h"
 #include "../vec/vecManip.h"
 #include "../const/const.h"
@@ -18,25 +19,29 @@ using namespace std;
 class water{
 
 public:
-   water(string, string, int, string, string, string, string, string,
-         bool, bool, bool, int);
-  ~water() {};
+   water(string, int, string, string, string, string, string, 
+         string, bool, bool, bool, int, float);
 
-  int getNwatoms()       const { return atoms_in_mol; }
-  string getWModelName() const { return water_model_name_caps; }
+  ~water();
 
 private:
-  Wmap wms;
+  WmapS wms;
+  WmapB wmb;
 
-  int atoms_in_mol, atoms_in_mol_wm;
+  int atoms_in_mol;
   int natoms;
   int nframes;
   int nwater;
-  int nchrom;
+  int nchroms = 0;
+  int nchromb = 0;
+  int nchromt;
+  int nchromt2;
   int ndim;
+  int offs = 0;
 
   const rvec *x;
   rvec box;
+  rvec *vOHa, *vOHu, *eft; 
 
   vector<int> oxyInd;
   vector<int> mH2O;
@@ -44,29 +49,30 @@ private:
   vector<int> mHOD;
   vector<int> woxyT;
 
+  vector<float> ROH;
+
   vector<float> uChg;
   vector<float> aChg;
-  vector<float> ef;
+  vector<float> efs;
+  vector<float> efb;
   vector<float> hf;
-  vector<float> ht;
-  vector<float> tdmut;
   vector<float> tdmuf;
-  vector<float> plzbt;
   vector<float> plzbf;
 
   vector<float> w10;
   vector<float> x10;
   vector<float> p10;
   vector<float> m10;
+  vector<float> w20b;
 
   int now, nhw, nmw;
   int nh2o, nd2o, nhod;
 
-  bool ws;
-  bool wb;
-  bool wf;
-  bool pure = true;
-  bool iso = false;
+  bool ws = true;
+  bool wb = false;
+  bool wf = false;;
+  bool uncs = false;
+
   bool ir;
   bool raman;
   bool sfg;
@@ -74,6 +80,7 @@ private:
   float total_charge;
   float trdip;
   float pz;
+  float fc;
 
   string water_model_name, water_model_name_caps;
   string water_map_name;
@@ -83,19 +90,30 @@ private:
   string gro_file;
   string chg_file;
 
+  ofstream houtfile;
+  ofstream doutfile;
+  ofstream poutfile;
+  ofstream jobfile;
+
   vector<string> uAtoms;
   vector<string> aAtoms;
 
   void waterModel();
-  void waterChrom();
   void waterJob();
   void readGro();
   void readCharges();
-  void updateEx();
   void IsoMix();
   void calcEf();
+  void updateEx();
   void calcWXPM();
   double waterTDC(const rvec&, const rvec&, const rvec&, const rvec&, const rvec&);
+  void intermC();
+  void trDip();
+  void trPol();
+
+  void writeH();
+  void writeD();
+  void writeP();
 
 };
 

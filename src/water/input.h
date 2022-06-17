@@ -16,7 +16,7 @@ public:
 
   string getTrajFile()   const { return xtc_file; }
   string getwSMap()      const { return stretch_map_name; }
-  string getChromType()  const { return chrom_type; }
+  string getwBMap()      const { return bend_map_name; }
   string getWaterModel() const { return water_model; }
   string getGroFile()    const { return gro_file; }
   string getJobType()    const { return job_type; }
@@ -26,6 +26,7 @@ public:
   bool ifIR()            const { return ir; }
   bool ifRaman()         const { return raman; }
   bool ifSFG()           const { return sfg; }
+  float getFc()          const { return fc; }
 
 private:
   int nframes = 1;
@@ -34,11 +35,13 @@ private:
   bool ir    = true; 
   bool raman = false; 
   bool sfg   = false;
+ 
+  float fc = 25.0;  // OH stretch-HOH bend overtone Fermi coupling
 
   string xtc_file    = "traj.xtc";
-  string chrom_type  = "ws";
   string stretch_map_name; 
-  string job_type;
+  string bend_map_name;
+  string job_type    = "wsOH";
   string water_model = "tip4p";
   string gro_file    = "confout.gro";
   string chg_file    = "charges.dat";

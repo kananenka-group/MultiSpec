@@ -15,7 +15,7 @@ Input::Input(int argc, char ** argv){
        ("help", "help message")
        ("xtc",         po::value<string>(&xtc_file),   "xtc file")
        ("stretch_map", po::value<string>(&stretch_map_name), "stretch map")
-       ("chrom_type",  po::value<string>(&chrom_type), "type of chromphores")
+       ("bend_map",    po::value<string>(&bend_map_name), "bend map")
        ("water_model", po::value<string>(&water_model),"water model")
        ("IR",          po::value<bool>(&ir),           "Calculate linear IR spectrum")
        ("Raman",       po::value<bool>(&raman),        "Calculate Raman spectrum") 
@@ -25,6 +25,7 @@ Input::Input(int argc, char ** argv){
        ("gro_file",    po::value<string>(&gro_file),   "gromacs file")
        ("charge_file", po::value<string>(&chg_file),   "file with charges")
        ("D2O",         po::value<int>(&nd2o),          "number of D2O molecules")
+       ("Fc",          po::value<float>(&fc),          "stretch-bend Fermi coupling")
        ;
 
        po::variables_map vm;

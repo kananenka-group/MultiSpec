@@ -343,7 +343,6 @@ void Exc::readHf(int nread)
          H1[i*nchrom + i] -= w_avg;
       }
    }
- 
 
 }
 

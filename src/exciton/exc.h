@@ -76,7 +76,7 @@ private:
    double dt;
    double rlx_time;
    double sep_time;
-   double w_avg;
+   double w_avg = 0.0;
 
    int nchrom;
    int ntime;

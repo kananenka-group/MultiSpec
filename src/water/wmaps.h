@@ -6,16 +6,16 @@
 #include <fstream>
 #include <string>
 #include <functional>
-#include "mapsT.h"
+#include "mapsTs.h"
 #include "../vec/vecManip.h"
 
 using namespace std;
 
-class Wmap{
+class WmapS{
 
 public:
-  Wmap(string, string);
-  ~Wmap() {};
+  WmapS(string, string);
+  ~WmapS() {};
 
   float getw01E(const float);
   float getm01E(const float);
@@ -36,8 +36,7 @@ public:
 
 private:
 
-  eFmap emap; 
-
+  eFmapS emap; 
   string ctype;
 
 };

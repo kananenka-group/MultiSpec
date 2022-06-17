@@ -2,12 +2,12 @@
 
 using namespace std;
 
-Wmap::Wmap(string map_name, string chrom_type) :
-           ctype(chrom_type)
+WmapS::WmapS(string map_name, string chrom_type) :
+             ctype(chrom_type)
 {
-   printf("\n** Reading Spectroscopic Map **\n");
+   printf("\n** Reading Stretch Map **\n");
 
-   if(map_name=="skinner_tip4p_2010"){
+   if(map_name=="li_2010_tip4p"){
       printf("   Using hydroxyl stretch map from : F. Li and J. L. Skinner, J. Chem. Phys. 132, 244504 (2010)\n");
       emap = {3732.90, -3519.8, -1.5352e5, 
               0.19318, -1.7248e-5, 0.0, 
@@ -18,7 +18,7 @@ Wmap::Wmap(string map_name, string chrom_type) :
               1.9813, 9.1419e-4, 0.0,
               0.1622, 10.381, 137.6,
              -1361.0, 27165.0, -1.887};
-   }else if(map_name=="gruenbaum_tip4p_2013"){
+   }else if(map_name=="gruenbaum_2013_tip4p"){
       printf("   Using hydroxyl stretch map from : S. M. Gruenbaum et al., J. Chem. Theory Comput. 9, 3109 (2013)\n");
       emap = {3760.2,  -3541.7, -152677,
               0.19285, -1.7261e-5, 0.0,
@@ -37,82 +37,83 @@ Wmap::Wmap(string map_name, string chrom_type) :
    // perform some checks
    if(ctype!="wsOH")
      if(ctype!="wsOD")
-       if(ctype!="wsiso"){ 
-          printf(" Error! Cannot recognize spec_type %s \n",ctype.c_str());
-          exit(EXIT_FAILURE);
-       }
+       if(ctype!="wsiso") 
+         if(ctype!="wswbH2O"){
+            printf(" Error! Cannot recognize spec_type %s \n",ctype.c_str());
+            exit(EXIT_FAILURE);
+         }
 
 }
 
-float Wmap::getw01E(float E){ 
-   if(ctype=="wsOH")
+float WmapS::getw01E(float E){ 
+   if(ctype=="wsOH" || ctype=="wswbH2O")
    {
       return getw01E_OH(E);
    }
-   else if(ctype=="wsOD")
+   else if(ctype=="wsOD" || ctype=="wswbD2O")
    {
       return getw01E_OD(E);
    }
 }
 
-float Wmap::getm01E(float E){
-   if(ctype=="wsOH")
+float WmapS::getm01E(float E){
+   if(ctype=="wsOH" || ctype=="wswbH2O")
    {
       return getm01E_OH(E);
    }
-   else if(ctype=="wsOD")
+   else if(ctype=="wsOD" || ctype=="wswbD2O")
    {
       return getm01E_OD(E);
    }
 }
 
-float Wmap::getx01E(float E){
-   if(ctype=="wsOH")
+float WmapS::getx01E(float E){
+   if(ctype=="wsOH" || ctype=="wswbH2O")
    {
       return getx01E_OH(E);
    }
-   else if(ctype=="wsOD")
+   else if(ctype=="wsOD" || ctype=="wswbD2O")
    {
       return getx01E_OD(E);
    }
 }
 
-float Wmap::getp01E(float E){
-   if(ctype=="wsOH")
+float WmapS::getp01E(float E){
+   if(ctype=="wsOH" || ctype=="wswbH2O")
    {
       return getp01E_OH(E);
    }
-   else if(ctype=="wsOD")
+   else if(ctype=="wsOD" || ctype=="wswbD2O")
    {
       return getp01E_OD(E);
    }
 }
 
-float Wmap::getw01E_OH(float E)
+float WmapS::getw01E_OH(float E)
 { return emap.w0_OH + emap.w1_OH*E + emap.w2_OH*E*E; }
 
-float Wmap::getw01E_OD(const float E)
+float WmapS::getw01E_OD(const float E)
 { return emap.w0_OD + emap.w1_OD*E + emap.w2_OD*E*E; }
 
-float Wmap::getm01E_OH(const float E)
+float WmapS::getm01E_OH(const float E)
 { return emap.m0_OH + emap.m1_OH*E + emap.m2_OH*E*E; }
 
-float Wmap::getm01E_OD(const float E)
+float WmapS::getm01E_OD(const float E)
 { return emap.m0_OD + emap.m1_OD*E + emap.m2_OD*E*E; }
 
-float Wmap::getp01E_OH(const float E)
+float WmapS::getp01E_OH(const float E)
 { return emap.p0_OH + emap.p1_OH*E + emap.p2_OH*E*E; }
 
-float Wmap::getp01E_OD(const float E)
+float WmapS::getp01E_OD(const float E)
 { return emap.p0_OD + emap.p1_OD*E + emap.p2_OD*E*E; }
 
-float Wmap::getx01E_OH(const float E)
+float WmapS::getx01E_OH(const float E)
 { return emap.x0_OH + emap.x1_OH*E + emap.x2_OH*E*E; }
 
-float Wmap::getx01E_OD(const float E)
+float WmapS::getx01E_OD(const float E)
 { return emap.x0_OD + emap.x1_OD*E + emap.x2_OD*E*E; }
 
-float Wmap::getcnn(const float Ei, const float Ej)
+float WmapS::getcnn(const float Ei, const float Ej)
 {
 //
 //  Intramolecular coupling of two hydroxyl stretches
@@ -146,8 +147,8 @@ float Wmap::getcnn(const float Ei, const float Ej)
    return wc;
 }
 
-float Wmap::getcnn(const float ei, const float xi, const float pi,
-                   const float ej, const float xj, const float pj)
+float WmapS::getcnn(const float ei, const float xi, const float pi,
+                    const float ej, const float xj, const float pj)
 {
    double wc;
    wc = (emap.wij0 + emap.wije*(ei + ej))*xi*xj + emap.wijpp*pi*pj;

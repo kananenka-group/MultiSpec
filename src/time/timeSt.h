@@ -10,7 +10,7 @@ void timet(std::chrono::steady_clock::time_point start, std::chrono::steady_cloc
    int hrs = floor(timet/3600.0);
    int min = floor(timet/60.0) - hrs*60.0;
    double sec = timet - hrs*3600 - min*60;
-   printf("\n Total time: %d hours  %d minutes %3.1f seconds.\n",hrs,min,sec);
+   printf("\n** Total time: %d hours  %d minutes %d seconds.\n",hrs,min,(int)round(sec));
 }
 
 #endif

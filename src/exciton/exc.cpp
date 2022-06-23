@@ -44,6 +44,13 @@ void Exc::run()
    // run jobs...
    if(ir) FTIR();
    if(raman) Raman();
+   if(sfg) SFG();
+
+}
+
+void Exc::SFG()
+{
+
 
 }
 
@@ -95,9 +102,7 @@ void Exc::Raman()
    fill_n(VHw.begin(), NFFT, complex_zero);
 
    printf("\n** Calculating VV and VH Raman TCFs **\n");
-   int ist;
    for(int ii=0; ii<navg; ++ii){
-      ist = ii*(ncor+nsep);
       fill_n(F.begin(), nchrom2, complex_zero);
       for(int jj=0; jj<nchrom;++jj)  F[jj*nchrom+jj] = complex_one;
       readHf(1);
@@ -179,9 +184,7 @@ void Exc::FTIR()
    fill_n(IRw.begin(), NFFT, complex_zero);
 
    printf("\n** Calculating dipole-dipole TCF **\n"); 
-   int ist;
    for(int ii=0; ii<navg; ++ii){
-      ist = ii*(ncor+nsep); 
       fill_n(F.begin(), nchrom2, complex_zero);
       for(int jj=0; jj<nchrom;++jj)  F[jj*nchrom+jj] = complex_one;
       readHf(1);
@@ -342,7 +345,13 @@ void Exc::readHf(int nread)
          // subtract average frequency to improve numerical stability
          H1[i*nchrom + i] -= w_avg;
       }
+
+      //cout << " reading new time step " << endl;
+      //for(int n=0; n<100; ++n)
+      //   cout << H1[n] << endl;
+      //exit(0);
    }
+
 
 }
 

@@ -12,7 +12,7 @@ LIBDIRS = -L$(SOFTDIR)/lib
 
 #MMD and MP generate .d files
 OBJ_DIR = OBJ
-SRCS  = main.cpp input.cpp ../traj/traj.cpp wmaps.cpp wmapb.cpp water.cpp 
+SRCS  = main.cpp input.cpp ../traj/traj.cpp wmaps.cpp wmapb.cpp water.cpp ../time/timeSt.cpp
 
 OBJS := $(SRCS:%.cpp=$(OBJ_DIR)/%.o)
 DEPS := $(OBJS:%.o=%.d)

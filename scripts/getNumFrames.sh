@@ -6,6 +6,6 @@
 # of frames in a trajectory file                     #
 #                                                    #
 ######################################################
-FILE="../tests/traj.xtc"
+FILE="../tests/trajL.xtc"
 vpkg_require gromacs/2018.1
 gmx check -f "$FILE"

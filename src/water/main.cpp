@@ -11,6 +11,7 @@ using namespace std;
 int main(int argc, char ** argv){
 
    printf("\n\n>>>>>>>>>>>>>>>>>>>> Water module <<<<<<<<<<<<<<<<<<<< \n");
+   tstamp("\n** Program starts @ ");
 
    // read input parameters
    Input input(argc, argv);   
@@ -24,8 +25,9 @@ int main(int argc, char ** argv){
             input.ifSFG(), input.getND2O(), input.getFc());
 
    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-   
+
    timet(start, end);
+   tstamp("\n** Program finished @ ");   
    printf("\n>>>>>>>>>>>>>>>>>>>> Done. <<<<<<<<<<<<<<<<<<<<\n\n");
 
    return EXIT_SUCCESS;

@@ -10,6 +10,7 @@ using namespace std;
 int main(int argc, char ** argv){
 
    printf("\n\n>>>>>>>>>>>>>>>>>>>> Exciton module <<<<<<<<<<<<<<<<<<<< \n");
+   tstamp("\n** Program starts @ ");
 
    // read input parameters
    Input input(argc, argv);   
@@ -28,6 +29,7 @@ int main(int argc, char ** argv){
 
    // print running time
    timet(start, end);
+   tstamp("\n** Program finished @ ");
 
    printf("\n>>>>>>>>>>>>>>>>>>>> Done. <<<<<<<<<<<<<<<<<<<<\n\n");
 

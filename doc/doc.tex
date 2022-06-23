@@ -70,14 +70,21 @@ bending frequencies used in Kananenka \textit{et al.}, J. Phys. Chem. B 123, 513
 \end{itemize}
 
 
-\item \textbf{spec\_type}: (\texttt{string}) type of calculation that will be performed. Supported types: i) OH stretch, keyword: \texttt{wsOH},
-ii) OD stretch, keyword: \texttt{wsOD}, iii) hydroxyl stretch in water isotope mixtures, keyword: \texttt{wsiso}; iv) OH-stretch fundamental-HOH bend overtone,
-keyword: \texttt{wswbH2O}.
+\item \textbf{spec\_type}: (\texttt{string}) type of calculation that will be performed. Supported types:
+\begin{itemize}
+\item OH stretch, keyword: \texttt{wsOH}
+\item OD stretch, keyword: \texttt{wsOD}
+\item hydroxyl stretch in water isotope mixtures, keyword: \texttt{wsiso}
+\item OH-stretch fundamental-HOH bend overtone, keyword: \texttt{wswbH2O}
+\item OD-stretch fundamental-DOD bend overtone, keyword: \texttt{wswbD2O}
+\item hydroxyl stretch fundamental-bend overtone in water isotope mixtures, keyword: \texttt{wswbiso}.
+\end{itemize}
 
-\item \textbf{D2O}: (\texttt{int}) the number of D$_2$O molecules mixed with H$_2$O. This is only required for \texttt{--spec\_type=wsiso}.
+\item \textbf{D2O}: (\texttt{int}) the number of D$_2$O molecules mixed with H$_2$O. This is only required for \texttt{--spec\_type=wsiso}
+and  \texttt{--spec\_type=wswbiso}.
 
-\item \textbf{Fc}: (\texttt{float}) OH-stretch fundamental-HOH bend overtone Fermi coupling. This is only required for \texttt{--spec\_type=wswbH2O}
-and \texttt{--spec\_type=wswbiso}.
+\item \textbf{Fc}: (\texttt{float}) OH-stretch fundamental-HOH bend overtone Fermi coupling. This is only required for \texttt{--spec\_type=wswbH2O},
+\texttt{--spec\_type=wswbD2O}, and \texttt{--spec\_type=wswbiso}.
 
 \subsection{Spectroscopic maps}
 
@@ -86,7 +93,6 @@ and \texttt{--spec\_type=wswbiso}.
 
 \item Generate input files for FTIR calculation of pure H$_2$O:
 
-\texttt{\{PATH\_TO\_WATER\}/water/water\_gen --xtc traj.xtc  --gro\_file confout.gro --charge\_file q.inp --stretch\_map gruenbaum\_tip4p\_2013  --IR 1 --Raman 0 --nframes 10 --chrom\_type ws  --spec\_type wsOH  --water\_model tip4p}
 
 \end{itemize}
 

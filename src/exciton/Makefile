@@ -11,7 +11,7 @@ LIBDIRS = -L$(SOFTDIR)/fftw3/build/lib
 
 #MMD and MP generate .d files
 OBJ_DIR = OBJ
-SRCS  = main.cpp input.cpp exc.cpp ../fft/dofft.cpp ../math/nummath.cpp
+SRCS  = main.cpp input.cpp exc.cpp ../fft/dofft.cpp ../math/nummath.cpp ../time/timeSt.cpp
 
 OBJS := $(SRCS:%.cpp=$(OBJ_DIR)/%.o)
 DEPS := $(OBJS:%.o=%.d)

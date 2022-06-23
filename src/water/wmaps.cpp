@@ -20,11 +20,11 @@ WmapS::WmapS(string map_name, string chrom_type) :
              -1361.0, 27165.0, -1.887};
    }else if(map_name=="gruenbaum_2013_tip4p"){
       printf("   Using hydroxyl stretch map from : S. M. Gruenbaum et al., J. Chem. Theory Comput. 9, 3109 (2013)\n");
-      emap = {3760.2,  -3541.7, -152677,
+      emap = {3760.2,  -3541.7, -152677.0,
               0.19285, -1.7261e-5, 0.0,
               1.6466,   5.7692e-4, 0.0,
               0.1646,  11.39, 63.41,
-              2767.8, -2630.3, -102601,
+              2767.8, -2630.3, -102601.0,
               0.16593, -2.0632e-5, 0.0,
               2.0475, 8.9108e-4, 0.0,
               0.1646,  11.39, 63.41,
@@ -101,17 +101,17 @@ float WmapS::getm01E_OH(const float E)
 float WmapS::getm01E_OD(const float E)
 { return emap.m0_OD + emap.m1_OD*E + emap.m2_OD*E*E; }
 
-float WmapS::getp01E_OH(const float E)
-{ return emap.p0_OH + emap.p1_OH*E + emap.p2_OH*E*E; }
+float WmapS::getp01E_OH(const float w)
+{ return emap.p0_OH + emap.p1_OH*w; }
 
-float WmapS::getp01E_OD(const float E)
-{ return emap.p0_OD + emap.p1_OD*E + emap.p2_OD*E*E; }
+float WmapS::getp01E_OD(const float w)
+{ return emap.p0_OD + emap.p1_OD*w; }
 
-float WmapS::getx01E_OH(const float E)
-{ return emap.x0_OH + emap.x1_OH*E + emap.x2_OH*E*E; }
+float WmapS::getx01E_OH(const float w)
+{ return emap.x0_OH + emap.x1_OH*w; }
 
-float WmapS::getx01E_OD(const float E)
-{ return emap.x0_OD + emap.x1_OD*E + emap.x2_OD*E*E; }
+float WmapS::getx01E_OD(const float w)
+{ return emap.x0_OD + emap.x1_OD*w; }
 
 float WmapS::getcnn(const float Ei, const float Ej)
 {

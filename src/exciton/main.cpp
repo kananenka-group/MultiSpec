@@ -3,7 +3,7 @@
 #include <chrono>
 #include "input.h"
 #include "exc.h"
-#include "../time/timeSt.h"
+#include "../util/util.h"
 
 using namespace std;
 
@@ -11,6 +11,7 @@ int main(int argc, char ** argv){
 
    printf("\n\n>>>>>>>>>>>>>>>>>>>> Exciton module <<<<<<<<<<<<<<<<<<<< \n");
    tstamp("\n** Program starts @ ");
+   uhstName();
 
    // read input parameters
    Input input(argc, argv);   

@@ -5,7 +5,7 @@ using namespace std;
 WmapB::WmapB(string map_name, string chrom_type) :
              ctype(chrom_type)
 {
-   if((ctype=="wswbH2O") || (ctype=="wswbD2O")){
+   if((ctype=="wswbH2O") || (ctype=="wswbD2O") || (ctype=="wswbiso")){
       printf("\n** Reading Bend Map **\n");
       if(map_name=="ni_2015_tip4p"){
          printf("   Using bending map from : Y. Ni and J. L. Skinner, J. Chem. Phys. 143, 014502 (2015)\n");

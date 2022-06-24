@@ -38,7 +38,8 @@ WmapS::WmapS(string map_name, string chrom_type) :
    if(ctype!="wsOH")
      if(ctype!="wsOD")
        if(ctype!="wsiso") 
-         if(ctype!="wswbH2O"){
+         if(ctype!="wswbH2O")
+           if(ctype!="wswbiso"){
             printf(" Error! Cannot recognize spec_type %s \n",ctype.c_str());
             exit(EXIT_FAILURE);
          }

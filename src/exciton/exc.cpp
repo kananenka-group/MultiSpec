@@ -345,11 +345,6 @@ void Exc::readHf(int nread)
          // subtract average frequency to improve numerical stability
          H1[i*nchrom + i] -= w_avg;
       }
-
-      //cout << " reading new time step " << endl;
-      //for(int n=0; n<100; ++n)
-      //   cout << H1[n] << endl;
-      //exit(0);
    }
 
 

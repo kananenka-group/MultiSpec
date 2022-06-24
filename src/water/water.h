@@ -20,7 +20,7 @@ class water{
 
 public:
    water(string, int, string, string, string, string, string, 
-         string, bool, bool, bool, int, float);
+         string, bool, bool, bool, int, float, bool);
 
   ~water();
 
@@ -66,12 +66,14 @@ private:
   vector<float> w20b;
 
   int now, nhw, nmw;
-  int nh2o, nd2o, nhod;
+  int nh2o, nhod;
+  int nd2o = 0;
 
   bool ws = true;
   bool wb = false;
   bool wf = false;;
   bool uncs = false;
+  bool DoDv = false;
 
   bool ir;
   bool raman;
@@ -94,6 +96,7 @@ private:
   ofstream doutfile;
   ofstream poutfile;
   ofstream jobfile;
+  ofstream isofile;
 
   vector<string> uAtoms;
   vector<string> aAtoms;

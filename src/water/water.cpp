@@ -3,12 +3,12 @@
 water::water(string wm_name, int nfr, string wS_wmap_name, string wB_map_name, 
              string job_type, string traj_file_name, string gro_file_name, 
              string charge_file_name, bool doir, bool doraman, bool dosfg, 
-             int d2o, float fermi_c) : 
+             int d2o, float fermi_c, bool doDoDov) : 
              water_model_name(wm_name), nframes(nfr), 
              jobType(job_type), traj_file(traj_file_name), gro_file(gro_file_name), 
              chg_file(charge_file_name), wms(wS_wmap_name, job_type), 
              wmb(wB_map_name, job_type), ir(doir), raman(doraman), sfg(dosfg), 
-             nd2o(d2o), fc(fermi_c)
+             nd2o(d2o), fc(fermi_c), DoDv(doDoDov)
 {
    // create trajectory object
    Traj traj(traj_file.c_str());
@@ -156,6 +156,22 @@ void water::waterJob(){
       printf("   Job Type: pure H2O stretch fundamental-bend overtone simulation.\n"); 
       printf("             %d OH chromophores, %d HOH chromophores \n",nchroms,nchromb);
       printf("             Fermi coupling = %7.5f [cm-1] \n",fc);
+   }else if(jobType=="wswbD2O"){
+      wf = true;
+      nchroms = 2*nwater;
+      nchromb = nwater;
+      offs = 3;
+      printf("   Job Type: pure D2O stretch fundamental-bend overtone simulation.\n");
+      printf("             %d OD chromophores, %d DOD chromophores \n",nchroms,nchromb);
+      printf("             Fermi coupling = %7.5f [cm-1] \n",fc);
+   }else if(jobType=="wswbiso"){
+      wf = true;
+      nchroms = 2*nwater;
+      nchromb = nwater;
+      offs = 3;
+      printf("   Job Type: Mixed H2O/D2O stretch fundamental-bend overtone simulation.\n");
+      printf("             Fermi coupling = %7.5f [cm-1] \n",fc);
+      IsoMix();
    }else{
       printf(" Error! Type of spectrum to calculate is not recognized: %s. \n ",jobType.c_str());
       exit(EXIT_FAILURE);
@@ -327,7 +343,7 @@ void water::readCharges()
 void water::IsoMix()
 {
 //
-   printf("   Isotope mixed simulation. \n");
+   printf("\n** Isotope mixed simulation. \n");
    printf("   Equilibrium constant for H2O + D2O <-> 2HOD is %7.5f \n",kEqIsoW);
 
    if(nd2o <= 0){
@@ -408,7 +424,24 @@ void water::IsoMix()
 
    for(int ii=0; ii<nhod; ++ii)
       woxyT.push_back(uni(rng));
+
+   // write water indices out
+   isofile.open("iso.dat", ios::out);
+   isofile << " H2O : " ;
+   for(int ii=0; ii<nh2o; ++ii)
+      isofile << mH2O[ii] ;
+    isofile << endl;
+
+   isofile << " D2O : " ;
+   for(int ii=0; ii<nd2o; ++ii)
+      isofile << mD2O[ii] ;
+    isofile << endl;
    
+   isofile << " HOD : " ;
+   for(int ii=0; ii<nhod; ++ii)
+      isofile << mHOD[ii] ;
+    isofile << endl;
+   printf("   H2O / HOD / D2O indices are written to iso.dat file.\n");
 }
 
 double water::waterTDC(const rvec &roha, const rvec &trda, const rvec &va, 
@@ -508,7 +541,11 @@ void water::calcWXPM()
       // D2O molecules
       for(int i=0; i<nd2o; ++i){
          k = mD2O[i];
-         w20b[k] = wmb.getw01E_DOD(efb[k]) + wmb.getw12E_DOD(efb[k]);
+         if(DoDv){
+            w20b[k] = wmb.getw01E_DOD(efb[k]) + wmb.getw12E_DOD(efb[k]);
+         }else{
+            w20b[k] = 0.0;
+         }
       }
       // HOD molecules
       for(int i=0; i<nhod; ++i){

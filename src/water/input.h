@@ -5,6 +5,8 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <exception>
+#include <boost/program_options.hpp>
 
 using namespace std;
 
@@ -26,6 +28,7 @@ public:
   bool ifIR()            const { return ir; }
   bool ifRaman()         const { return raman; }
   bool ifSFG()           const { return sfg; }
+  bool ifDODv()          const { return dodov; }
   float getFc()          const { return fc; }
 
 private:
@@ -37,6 +40,8 @@ private:
   bool sfg   = false;
  
   float fc = 25.0;  // OH stretch-HOH bend overtone Fermi coupling
+
+  bool dodov = false;
 
   string xtc_file    = "traj.xtc";
   string stretch_map_name; 

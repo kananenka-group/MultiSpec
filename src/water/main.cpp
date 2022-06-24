@@ -4,7 +4,7 @@
 #include <chrono>
 #include "input.h"
 #include "water.h"
-#include "../time/timeSt.h"
+#include "../util/util.h"
 
 using namespace std;
 
@@ -12,6 +12,7 @@ int main(int argc, char ** argv){
 
    printf("\n\n>>>>>>>>>>>>>>>>>>>> Water module <<<<<<<<<<<<<<<<<<<< \n");
    tstamp("\n** Program starts @ ");
+   uhstName();
 
    // read input parameters
    Input input(argc, argv);   
@@ -22,7 +23,7 @@ int main(int argc, char ** argv){
    water S (input.getWaterModel(), input.getNFrames(), input.getwSMap(), 
             input.getwBMap(), input.getJobType(), input.getTrajFile(), 
             input.getGroFile(), input.getChgFile(), input.ifIR(), input.ifRaman(),
-            input.ifSFG(), input.getND2O(), input.getFc());
+            input.ifSFG(), input.getND2O(), input.getFc(), input.ifDODv());
 
    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 

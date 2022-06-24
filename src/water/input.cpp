@@ -1,6 +1,4 @@
 #include "input.h"
-#include <exception>
-#include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
 using namespace std;
@@ -25,6 +23,7 @@ Input::Input(int argc, char ** argv){
        ("gro_file",    po::value<string>(&gro_file),   "gromacs file")
        ("charge_file", po::value<string>(&chg_file),   "file with charges")
        ("D2O",         po::value<int>(&nd2o),          "number of D2O molecules")
+       ("DOD_overtone",po::value<bool>(&dodov),        "turn on/off DOD overtone in iso mix simulations")
        ("Fc",          po::value<float>(&fc),          "stretch-bend Fermi coupling")
        ;
 

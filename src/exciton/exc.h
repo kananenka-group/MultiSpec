@@ -34,6 +34,7 @@ private:
    void readPf(int,bool);
    void FTIR();
    void Raman();
+   void SFG();
    void moveF();
    void calcR1D(int);
    void calcRm(int);
@@ -89,6 +90,7 @@ private:
 
    bool ir;
    bool raman;
+   bool sfg;
 
    // complex constants
    const complex<double> img          = {0.,1.};

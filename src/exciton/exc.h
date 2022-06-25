@@ -97,6 +97,7 @@ private:
    const complex<double> complex_one  = {1.,0.};
    const complex<double> complex_zero = {0.,0.};
 
+   // default file names
    string Hfile = "Hamiltonian.bin";
    string Dfile = "Dipole.bin";
    string Pfile = "Polarizability.bin";

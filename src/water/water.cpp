@@ -427,20 +427,20 @@ void water::IsoMix()
 
    // write water indices out
    isofile.open("iso.dat", ios::out);
-   isofile << " H2O : " ;
+   isofile << " H2O : ";
    for(int ii=0; ii<nh2o; ++ii)
-      isofile << mH2O[ii] ;
-    isofile << endl;
+      isofile << mH2O[ii] << "  ";
+   isofile << endl;
 
-   isofile << " D2O : " ;
+   isofile << " D2O : ";
    for(int ii=0; ii<nd2o; ++ii)
-      isofile << mD2O[ii] ;
-    isofile << endl;
+      isofile << mD2O[ii] << "  ";
+   isofile << endl;;
    
-   isofile << " HOD : " ;
+   isofile << " HOD : ";
    for(int ii=0; ii<nhod; ++ii)
-      isofile << mHOD[ii] ;
-    isofile << endl;
+      isofile << mHOD[ii] << "  ";
+   isofile << endl;
    printf("   H2O / HOD / D2O indices are written to iso.dat file.\n");
 }
 

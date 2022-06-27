@@ -426,7 +426,7 @@ void water::IsoMix()
       woxyT.push_back(uni(rng));
 
    // write water indices out
-   isofile.open("iso.dat", ios::out);
+   isofile.open("iso.txt", ios::out);
    isofile << " H2O : ";
    for(int ii=0; ii<nh2o; ++ii)
       isofile << mH2O[ii] << "  ";
@@ -441,7 +441,7 @@ void water::IsoMix()
    for(int ii=0; ii<nhod; ++ii)
       isofile << mHOD[ii] << "  ";
    isofile << endl;
-   printf("   H2O / HOD / D2O indices are written to iso.dat file.\n");
+   printf("   H2O / HOD / D2O indices are written to iso.txt file.\n");
 }
 
 double water::waterTDC(const rvec &roha, const rvec &trda, const rvec &va, 

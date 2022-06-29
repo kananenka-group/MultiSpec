@@ -52,8 +52,8 @@ transition dipole and transition polarizability trajectories for IR, Raman, and 
 \item \textbf{Raman}: (\texttt{bool}) calculate transition polarizability trajectories for Raman spectra, options: \{1,0\}.
 \item \textbf{SFG}: (\texttt{bool}) calculate transition polarizability and transition dipole trajectories for SFG spectra, options: \{1,0\}.
 \item \textbf{nframes}: (\texttt{int}) how many frames read from *.xtc file and process.
-\item \textbf{charge\_file}: (\texttt{string}) path to charge file. Charge file is a simple two-column file containing atom names matching atoms in 
-*.gro file and corresponding charges.
+\item \textbf{atoms\_file}: (\texttt{string}) path to the file containing charges and masses of all atoms. This is a simple three-column file containing atom names matching atoms in 
+*.gro file, corresponding charges and masses. Comment lines must start with \textsc{\#}. An example of such file can be found in Sec.~\ref{app:atomsf}.
 \item \textbf{water\_model}: (\texttt{string}) water model. Supported water models: \texttt{TIP4P}.
 \item \textbf{stretch\_map}: (\texttt{string}) spectroscopic map for OH and OD stretch. The following maps have been implemented so far:
 \begin{itemize}
@@ -83,11 +83,15 @@ bending frequencies used in Kananenka \textit{et al.}, J. Phys. Chem. B 123, 513
 \item \textbf{D2O}: (\texttt{int}) the number of D$_2$O molecules mixed with H$_2$O. This is only required for \texttt{--spec\_type=wsiso}
 and  \texttt{--spec\_type=wswbiso}.
 
-\item \textbf{Fc}: (\texttt{float}) OH-stretch fundamental-HOH bend overtone Fermi coupling. This is only required for \texttt{--spec\_type=wswbH2O},
+\item \textbf{Fc}: (\texttt{float}) OH-stretch fundamental-HOH bend overtone Fermi coupling. This is  required only for \texttt{--spec\_type=wswbH2O},
 \texttt{--spec\_type=wswbD2O}, and \texttt{--spec\_type=wswbiso}.
 
 \item \textbf{DOD\_overtone}: (\texttt{bool}) use this option to turn on/off DOD bend overtone in water hydroxyl stretch fundamental/bend overtone
 calculations of isotope mixtures. This option only works with \texttt{--spec\_type=wswbiso}.
+
+\item \textbf{trdipSFG}: (\texttt{float}) distance in \AA{} between O atom and the
+OH-stretch transition dipole along the O-H(D) bond. This only works with  
+\texttt{--SFG=1}.
 
 \subsection{Spectroscopic maps}
 
@@ -103,5 +107,17 @@ calculations of isotope mixtures. This option only works with \texttt{--spec\_ty
 
 \end{itemize}
 
+\begin{appendix}
+\section{\label{app:atomsf}atoms\_file}
+Below is an example of a file that can be used with the \textbf{atoms\_file} command line. This is a pure water TIP4P simulation:
+\begin{verbatim}
+# this is a comment line; atom  charge  mass
+OW      0.0     16.000
+HW1     0.52    1.008
+HW2     0.52    1.008
+MW      -1.04   0.000
+\end{verbatim}
+
+\end{appendix}
 
 \end{document}

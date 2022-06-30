@@ -2,14 +2,20 @@
 
 water::water(string wm_name, int nfr, string wS_wmap_name, string wB_map_name, 
              string job_type, string traj_file_name, string gro_file_name, 
-             string charge_file_name, bool doir, bool doraman, bool dosfg, 
-             int d2o, float fermi_c, bool doDoDov) : 
+             string atoms_file_name, bool doir, bool doraman, bool dosfg, 
+             int d2o, float fermi_c, bool doDoDov, float trdip_for_SFG) : 
              water_model_name(wm_name), nframes(nfr), 
              jobType(job_type), traj_file(traj_file_name), gro_file(gro_file_name), 
-             chg_file(charge_file_name), wms(wS_wmap_name, job_type), 
+             ams_file(atoms_file_name), wms(wS_wmap_name, job_type), 
              wmb(wB_map_name, job_type), ir(doir), raman(doraman), sfg(dosfg), 
-             nd2o(d2o), fc(fermi_c), DoDv(doDoDov)
+             nd2o(d2o), fc(fermi_c), DoDv(doDoDov), tdSFG(trdip_for_SFG)
 {
+   // removing old files
+   vector<string> files_to_remove;
+   files_to_remove.push_back("job.bin");
+   files_to_remove.push_back("Fz.bin");
+   removeFile(files_to_remove);
+
    // create trajectory object
    Traj traj(traj_file.c_str());
 
@@ -24,6 +30,10 @@ water::water(string wm_name, int nfr, string wS_wmap_name, string wB_map_name,
 
    // and type of job
    waterJob();
+
+   // print out what to calculate and
+   // set up some flags there
+   CalcSQuant();
 
    // allocate memory
    nchromt = nchroms + nchromb;
@@ -40,6 +50,7 @@ water::water(string wm_name, int nfr, string wS_wmap_name, string wB_map_name,
    w20b.resize(nchromb,0.0);
    tdmuf.resize(nchromt*3,0.0);
    plzbf.resize(nchromt*6,0.0);
+   fzf.resize(nchromt,0.0);
 
    // 
    pz = bond_plz_ratio-1.0;
@@ -49,6 +60,7 @@ water::water(string wm_name, int nfr, string wS_wmap_name, string wB_map_name,
    jobfile.open("job.bin", ios::binary | ios::out);
    if(ir) doutfile.open("Dipole.bin", ios::binary | ios::out);
    if(raman) poutfile.open("Polarizability.bin", ios::binary | ios::out);
+   if(sfg) fzoutfile.open("Fz.bin",ios::binary | ios::out);
 
    vOHa = new rvec[nchroms];
    vOHu = new rvec[nchroms];
@@ -75,6 +87,7 @@ water::water(string wm_name, int nfr, string wS_wmap_name, string wB_map_name,
          writeH();
          if(ir) writeD(); 
          if(raman) writeP(); 
+         if(sfg) writeFz();
          counter++;
       }
    }
@@ -102,6 +115,29 @@ water::~water() {
   delete [] eft;
 }
 
+void water::CalcSQuant()
+{
+   printf("\n** Reading physical properties to be calculated. **\n");
+   if(ir)
+      printf("   IR flag is on. Transition dipoles will be calculated.\n");
+   if(raman) 
+      printf("   Raman flag is on. Transition polarizabilities will be calculated.\n");
+   if(sfg){
+      printf("   SFG flag is on. Transition probablities\n");
+      printf("                   and scaled transition dipoles will be calculated.\n");
+      printf("   See P. A. Pieniazek et al., J. Chem. Phys. 135, 044701 (2011) for more details.\n");                
+      printf("   Cut-off in the switching function: %7.5f [A]\n",SWITCHF_CUT);
+      if(tdSFG<0){
+         printf(" Error: Wrong value of SFG transition dipole location ! \n",tdSFG); 
+         exit(EXIT_FAILURE);
+      }
+      printf("   OH Transition dipole is located %7.5f [A] away from the O atom.\n",tdSFG);
+      tdSFG *= A0;
+      ir = true;
+      raman = true;
+   }
+}
+
 void water::waterModel()
 {
    printf("\n** Reading water model **\n");
@@ -110,9 +146,13 @@ void water::waterModel()
    if(water_model_name=="TIP4P" || water_model_name=="tip4p"){
       printf("   Water model : TIP4P [ W. L. Jorgensen et al., J. Chem. Phys. 79, 926-935 (1983) ]\n");
       water_model_name_caps = "TIP4P";
-      trdip = 0.67*A0;
+      // set SFG transition dipole
+      trdip = 0.67;
+      if(tdSFG<0)
+         tdSFG = trdip;
+      trdip *= A0;
    }else{
-      // SPC/E trdip = 0.58 Angstrom
+      // SPC/E trdip = 0.58*A0 Angstrom
       printf(" Error: %s water model is not recognized ! ",water_model_name.c_str()); 
       exit(EXIT_FAILURE);
    }
@@ -292,30 +332,49 @@ void water::readGro(){
 
 void water::readCharges()
 {
-   ifstream file(chg_file);
+   ifstream file(ams_file);
 
    if (!file.good()) {
-      printf("ERROR: charge file %s cannot be read.\n",chg_file.c_str());
+      printf("ERROR: atom info file %s cannot be read.\n",ams_file.c_str());
       exit(EXIT_FAILURE);
    }
 
-   printf("\n** Reading charge file: %s **\n",chg_file.c_str());
+   printf("\n** Reading file with atomic information: %s **\n",ams_file.c_str());
 
    uChg.resize(uAtoms.size());
+   uMas.resize(uAtoms.size());
 
    string line;
 
-   while(getline(file, line)) {
+   // read atomic charges and masses line by line from the corresponding file
+   int pos;
+   while(getline(file,line)){
 
-      string entry;
+      pos = line.find("#");
+      if(pos==0) continue;
+
+      string buf;
       stringstream  linestream(line);
 
-      linestream >> entry;
+      //linestream >> entry;
+      vector<string> strs;
+      while(linestream >> buf)
+        strs.push_back(buf);
 
+      // assign charges and masses
       for(unsigned int ii=0; ii<uAtoms.size(); ++ii){
-         if(entry==uAtoms[ii]){
-            linestream >> entry;
-            uChg[ii] = stof(entry);
+         if(strs[0]==uAtoms[ii]){
+            if(strs.size() != 3){
+               printf(" Wrong line for atom %s in %s. Expecting both charge and mass. \n",uAtoms[ii].c_str(),ams_file.c_str());
+               printf(" Expecting : <atom> <charge> <mass>. Got \n");
+               for(unsigned int ij=0; ij<strs.size(); ++ij)
+                  printf(" %s ",strs[ij].c_str());
+               printf("\n");
+               exit(EXIT_FAILURE);
+            }else{
+               uChg[ii] = stof(strs[1]);
+               uMas[ii] = stof(strs[2]);
+            }
          }
       }
    }
@@ -325,18 +384,31 @@ void water::readCharges()
       printf(" %s (%5.3f) ",uAtoms[ii].c_str(),uChg[ii]);
    printf("\n");
 
+   printf("   Masses found and assigned: ");
+   for(unsigned int ii=0; ii<uAtoms.size(); ++ii)
+      printf(" %s (%5.3f) ",uAtoms[ii].c_str(),uMas[ii]);
+   printf("\n");
+
    aChg.resize(natoms); 
+   aMas.resize(natoms);
    
    for(int ii=0; ii<natoms; ++ii)
       for(unsigned int jj=0; jj<uAtoms.size(); ++jj)
-         if(aAtoms[ii]==uAtoms[jj])
+         if(aAtoms[ii]==uAtoms[jj]){
             aChg[ii] = uChg[jj];
+            aMas[ii] = uMas[jj];
+         }
 
    total_charge = 0.0;
-   for(int ii=0; ii<natoms; ++ii)
+   total_mass   = 0.0;
+   for(int ii=0; ii<natoms; ++ii){
       total_charge += aChg[ii];
+      total_mass   += aMas[ii];
+   }
+   inv_total_mass = 1.0/total_mass;
 
    printf("   Total charge of the system = %5.3f \n",total_charge);
+   printf("   Total mass of the system   = %5.3f \n",total_mass);
 
 }
 
@@ -584,16 +656,25 @@ void water::intermC(){
   
 }
 
+
 void water::trDip()
 {
-   rvec out;
+   rvec out, vcom, slabv, loctd;
    float scl;
    fill_n(tdmuf.begin(), 3*nchromt, 0.0);
+
+   if(sfg) com(vcom);
 
    for(int n=0; n<nwater; ++n){
       for(int m=0; m<2; ++m){
          scl = m10[2*n+m]*x10[2*n+m];
          sclRvec(vOHa[2*n+m], out, scl);
+         if(sfg){
+            addRvec(x[oxyInd[n]],vOHa[2*n+m],loctd,tdSFG);
+            addRvec(loctd,vcom,slabv,-1.0);
+            pbc(slabv,box);
+            fzf[offs*n+m] = switchf(ecRvec(slabv,2));
+         }
          copyRRvec(&tdmuf[3*(offs*n+m)], out);
       }
    }
@@ -653,6 +734,9 @@ void water::writeD()
 
 void water::writeP()
 { poutfile.write(reinterpret_cast<char*>(&plzbf[0]), (6*nchromt)*sizeof(float)); }
+
+void water::writeFz()
+{ fzoutfile.write(reinterpret_cast<char*>(&fzf[0]), (nchromt)*sizeof(float)); }
 
 void water::calcEf(){
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -757,3 +841,15 @@ void water::updateEx(){
 
 }
 
+void water::com(rvec &vcom)
+{
+// determine center-of-mass of a slab.
+   rvec out;
+   setRvec(out, 0.0);
+
+   for(int ii=0; ii<nwater; ++ii)
+      for(int l=0; l<atoms_in_mol; ++l)
+         addRvec(x[oxyInd[ii]+l], out, aMas[atoms_in_mol*ii+l]);
+
+   sclRvec(out, vcom, inv_total_mass);
+}

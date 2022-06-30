@@ -37,13 +37,14 @@ WmapB::WmapB(string map_name, string chrom_type) :
                  0.31143, 6.00186e-5,
                 -0.32163,
                 -0.220589, 0.544310, -0.871378,
-                 1210.0, 0.0,      // field-independent fundamental bend map
+                 1210.0, 0.0,      // field-independent fundamental bend map, M. Falk, J. Raman Spectrosc. 21, 563 (1990).
                  1170, 0.0,        // w21 with 40 cm-1 anharmonicity 
                  0.0, 0.0,
                  0.0, 0.0,
                 -0.32163,
                 -0.220589, 0.544310, -0.871378,
-                 1465.0, 0.0,      // HOD bend fundamental see JPCB 117, 15319 (2013), Fig. 2
+                 1465.0, 0.0,      // HOD bend fundamental see JPCB 117, 15319 (2013), Fig. 2, see also PRL 100, 173901
+                                   // where HOD freq. is 1450 cm-1 and overtone is at 2900 cm-1
                  1485.0, 0.0,      // HOD 1->2 taken such that HOD overtones matches JPCB 117, 15319 (2013)
                  0.0, 0.0,
                  0.0, 0.0,

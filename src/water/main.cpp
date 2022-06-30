@@ -22,8 +22,9 @@ int main(int argc, char ** argv){
    // create and run simulation
    water S (input.getWaterModel(), input.getNFrames(), input.getwSMap(), 
             input.getwBMap(), input.getJobType(), input.getTrajFile(), 
-            input.getGroFile(), input.getChgFile(), input.ifIR(), input.ifRaman(),
-            input.ifSFG(), input.getND2O(), input.getFc(), input.ifDODv());
+            input.getGroFile(), input.getAmsFile(), input.ifIR(), input.ifRaman(),
+            input.ifSFG(), input.getND2O(), input.getFc(), input.ifDODv(),
+            input.getTDSFG());
 
    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 

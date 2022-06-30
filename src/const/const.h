@@ -26,6 +26,9 @@
 // ``Orthogonalyzed H2O and D2O species obtained from infrared spectra of liquid water at several temperatures''
 // by Jean-Joseph Max, Pascal Larouche and Camille Chapados
 // Journal of Molecular Structure 1149 (2017) 457-472
-//
+
+// Switching function cut-off for SFG calculations (in A)
+// See J. Chem. Phys. 135, 044701 (2011)
+#define SWITCHF_CUT 4.0
 
 #endif

@@ -13,6 +13,7 @@
 #include "../traj/traj.h"
 #include "../vec/vecManip.h"
 #include "../const/const.h"
+#include "../util/util.h"
 
 using namespace std;
 
@@ -20,7 +21,7 @@ class water{
 
 public:
    water(string, int, string, string, string, string, string, 
-         string, bool, bool, bool, int, float, bool);
+         string, bool, bool, bool, int, float, bool, float);
 
   ~water();
 
@@ -53,11 +54,15 @@ private:
 
   vector<float> uChg;
   vector<float> aChg;
+  vector<float> uMas;
+  vector<float> aMas;
+
   vector<float> efs;
   vector<float> efb;
   vector<float> hf;
   vector<float> tdmuf;
   vector<float> plzbf;
+  vector<float> fzf;
 
   vector<float> w10;
   vector<float> x10;
@@ -80,9 +85,12 @@ private:
   bool sfg;
 
   float total_charge;
+  float total_mass;
+  float inv_total_mass;
   float trdip;
   float pz;
   float fc;
+  float tdSFG;
 
   string water_model_name, water_model_name_caps;
   string water_map_name;
@@ -90,12 +98,13 @@ private:
   string chromType;
   string jobType;
   string gro_file;
-  string chg_file;
+  string ams_file;
 
   ofstream houtfile;
   ofstream doutfile;
   ofstream poutfile;
   ofstream jobfile;
+  ofstream fzoutfile;
   ofstream isofile;
 
   vector<string> uAtoms;
@@ -110,13 +119,16 @@ private:
   void updateEx();
   void calcWXPM();
   double waterTDC(const rvec&, const rvec&, const rvec&, const rvec&, const rvec&);
+  void com(rvec&);
   void intermC();
   void trDip();
   void trPol();
+  void CalcSQuant();
 
   void writeH();
   void writeD();
   void writeP();
+  void writeFz();
 
 };
 

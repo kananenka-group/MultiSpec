@@ -4,14 +4,14 @@ using namespace std;
 
 Exc::Exc(string h_file_name, string d_file_name, int nchr, int nt, double deltaT,
          double corrT, double trel, int nv, double tsep, bool irs, bool ramans,
-         double wav):
+         double wav, bool sfgs):
          Hfile(h_file_name), Dfile(d_file_name), nchrom(nchr), ntime(nt), dt(deltaT),
          tc(corrT), rlx_time(trel), navg(nv), sep_time(tsep), ir(irs), raman(ramans),
-         w_avg(wav)
+         sfg(sfgs), w_avg(wav)
 {
    // setting up some variables 
    int nfrmn;
-   if(ir || raman){
+   if (ir || raman || sfg){
       ncor = (int) (tc/dt);
       nsep = (int) (sep_time/dt); 
       nfrmn = navg*ncor+nsep*(navg-1);
@@ -33,7 +33,6 @@ Exc::Exc(string h_file_name, string d_file_name, int nchr, int nt, double deltaT
 
 void Exc::run()
 {
-
    // define some common variables
    ndim1   = nchrom*(nchrom+1)/2;
    nchrom2 = nchrom*nchrom;
@@ -50,8 +49,123 @@ void Exc::run()
 
 void Exc::SFG()
 {
+   printf("\n** Sum-frequency generation module **\n");
+  
+   // open input files:
+   // Hamiltonian
+   hinfile.open(Hfile, ios::binary);
+   if(hinfile.fail()){
+      printf(" Error! Could not open file: %s \n",Hfile.c_str());
+      exit(EXIT_FAILURE);
+   }
+   hinfile.clear();
+   hinfile.seekg(0, ios::beg);
 
+   // polarizability
+   pinfile.open(Pfile, ios::binary);
+   if(pinfile.fail()){
+      printf(" Error! Could not open file: %s \n",Pfile.c_str());
+      exit(EXIT_FAILURE);
+   }
+   pinfile.clear();
+   pinfile.seekg(0, ios::beg);
 
+   // dipole
+   dinfile.open(Dfile, ios::binary);
+   if(dinfile.fail()){
+      printf(" Error! Could not open file: %s \n",Dfile.c_str());
+      exit(EXIT_FAILURE);
+   }
+   dinfile.clear();
+   dinfile.seekg(0, ios::beg);
+
+   // scaling factors
+   finfile.open(Fzfile, ios::binary);
+   if(finfile.fail()){
+      printf(" Error! Could not open file: %s \n",Fzfile.c_str());
+      printf(" It should have been created in data generation module with --SFG 1.\n");
+      exit(EXIT_FAILURE);
+   }
+   finfile.clear();
+   finfile.seekg(0, ios::beg);
+
+   printf("     Relaxation time: %7.5f [ps] \n",rlx_time);
+
+   // allocate variables
+   plz_xx0.resize(nchrom);
+   plz_xy0.resize(nchrom);
+   plz_xz0.resize(nchrom);
+   plz_yy0.resize(nchrom);
+   plz_yz0.resize(nchrom);
+   plz_zz0.resize(nchrom);
+   plz_xx.resize(nchrom);
+   plz_xy.resize(nchrom);
+   plz_xz.resize(nchrom);
+   plz_yy.resize(nchrom);
+   plz_yz.resize(nchrom);
+   plz_zz.resize(nchrom);
+
+   mu1_x.resize(nchrom);
+   mu1_y.resize(nchrom);
+   mu1_z.resize(nchrom);
+   mu1_x0.resize(nchrom);
+   mu1_y0.resize(nchrom);
+   mu1_z0.resize(nchrom);
+
+   fzt.resize(nchrom);
+   fzt0.resize(nchrom);
+
+   sspt.resize(ncor);
+   fill_n(sspt.begin(), ncor, complex_zero);
+   pppt.resize(ncor);
+   fill_n(pppt.begin(), ncor, complex_zero);
+
+   sspw.resize(NFFT);
+   fill_n(sspw.begin(), NFFT, complex_zero);
+   pppw.resize(NFFT);
+   fill_n(pppw.begin(), NFFT, complex_zero);
+
+   printf("\n** Calculating ssp, ppp SFG TCFs **\n");
+   for(int ii=0; ii<navg; ++ii){
+      fill_n(F.begin(), nchrom2, complex_zero);
+      for(int jj=0; jj<nchrom;++jj)  F[jj*nchrom+jj] = complex_one;
+      readHf(1);
+      readPf(1,true);
+      readDf(1,true);
+      readFzf(1,true);
+      scaleTDM();
+      calcSFG(0);
+      for(int tt=1; tt<ncor; ++tt){
+         readHf(1);
+         readPf(1,false);
+         readDf(1,false);
+         readFzf(1,false);
+         moveF();
+         calcSFG(tt);
+      }
+      readHf(nsep);
+      readPf(nsep,false);
+      readDf(nsep,false);
+      readFzf(nsep,false);
+   }
+
+   fgrid1D();
+
+   FFT1D(sspt, sspw, dt, NFFT);
+   FFT1D(pppt, pppw, dt, NFFT);
+
+   printTCF1D("sspt.dat", "SSP", sspt);
+   printTCF1D("pppt.dat", "PPP", pppt);
+
+   printIw1D("sspw.dat", "SSP", sspw);
+   printIw1D("pppw.dat", "PPP", pppw);
+
+   // close files:
+   dinfile.close();
+   pinfile.close();
+   hinfile.close();
+   finfile.close();
+   
 }
 
 void Exc::Raman()
@@ -347,7 +461,6 @@ void Exc::readHf(int nread)
       }
    }
 
-
 }
 
 void Exc::readDf(int nread, bool st)
@@ -386,10 +499,10 @@ void Exc::printIw1D(string specf, string stype, vector<complex<double>> Iw)
 
    printf("     Writing %s Spectra into %s \n",stype.c_str(),specf.c_str());
    for(int i=NFFT/2, j=0; i<NFFT; ++i, j++)
-      o_iw_file << wgrid1d[j] << "  " << Iw[i].real()/navg << endl;
+      o_iw_file << wgrid1d[j] << "  " << Iw[i].real()/navg << "  " << Iw[i].imag()/navg << endl;
 
    for(int i=0, j=NFFT/2; i<NFFT/2; ++i, ++j)
-      o_iw_file << wgrid1d[j] << "  " << Iw[i].real()/navg << endl;
+      o_iw_file << wgrid1d[j] << "  " << Iw[i].real()/navg << "  "<< Iw[i].imag()/navg << endl;
 
    o_iw_file.close();
 
@@ -626,5 +739,75 @@ void Exc::printRamS()
 
    o_upw_file.close();
 
-   
+}
+
+void Exc::calcSFG(int ti)
+{
+  MKL_INT lda;
+  lda = (MKL_INT) nchrom;
+
+  vector<complex<double>> mu0(nchrom, complex_zero);
+  vector<complex<double>> tpt(nchrom, complex_zero);
+  vector<complex<double>> work(nchrom, complex_zero);
+
+  complex<double> cxxz, cyyz, czzz;
+
+  // xxz
+  for(int ii=0; ii<nchrom; ++ii) mu0[ii] = complex_one*mu1_z0[ii];
+  for(int ii=0; ii<nchrom; ++ii) tpt[ii] = conj(complex_one*plz_xx[ii]);
+  
+  cblas_zgemv(CblasRowMajor, CblasNoTrans, lda, lda, &complex_one,
+              &F[0], lda, &mu0[0], 1, &complex_zero, &work[0], 1);
+  cblas_zdotu_sub(lda, &tpt[0], 1, &work[0], 1, &cxxz);
+  
+  // yyz
+  for(int ii=0; ii<nchrom; ++ii) mu0[ii] = complex_one*mu1_z0[ii];
+  for(int ii=0; ii<nchrom; ++ii) tpt[ii] = conj(complex_one*plz_yy[ii]);
+  
+  cblas_zgemv(CblasRowMajor, CblasNoTrans, lda, lda, &complex_one,
+              &F[0], lda, &mu0[0], 1, &complex_zero, &work[0], 1);
+  cblas_zdotu_sub(lda, &tpt[0], 1, &work[0], 1, &cyyz);
+
+  // zzz
+  for(int ii=0; ii<nchrom; ++ii) mu0[ii] = complex_one*mu1_z0[ii];
+  for(int ii=0; ii<nchrom; ++ii) tpt[ii] = conj(complex_one*plz_zz[ii]);
+
+  cblas_zgemv(CblasRowMajor, CblasNoTrans, lda, lda, &complex_one,
+              &F[0], lda, &mu0[0], 1, &complex_zero, &work[0], 1);
+  cblas_zdotu_sub(lda, &tpt[0], 1, &work[0], 1, &czzz);
+  
+  double dtc = (double) ti;
+  double exptc = exp(-1.0*dt*dtc/(2.0*rlx_time));
+
+  sspt[ti] += 0.5*(cxxz+cyyz)*exptc;
+  pppt[ti] += (-0.5*cxxz-0.5*cyyz+czzz)*exptc;
+
+}
+
+void Exc::readFzf(int nread, bool st)
+{
+   int size = nchrom*nread;
+
+   vector<float> Ftmp;
+   Ftmp.resize(size);
+
+   finfile.read(reinterpret_cast<char*>(&Ftmp[0]), Ftmp.size()*sizeof(float));
+
+   if(nread==1){
+      for(int ii=0; ii<nchrom; ++ii)
+         fzt[ii] = (double) Ftmp[ii];
+      
+      if(st)
+         memcpy(&fzt0[0], &fzt[0], sizeof(double)*nchrom);
+   }
+
+}
+
+void Exc::scaleTDM()
+{
+//
+// Here we scale the transition dipole moments for SFG
+//
+   for(int ii=0; ii<nchrom; ++ii)
+      mu1_z0[ii] *= fzt0[ii];   
 }

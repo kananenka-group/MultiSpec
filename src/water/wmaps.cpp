@@ -9,7 +9,7 @@ WmapS::WmapS(string map_name, string chrom_type) :
 
    if(map_name=="li_2010_tip4p"){
       printf("   Using hydroxyl stretch map from : F. Li and J. L. Skinner, J. Chem. Phys. 132, 244504 (2010)\n");
-      emap = {3732.90, -3519.8, -1.5352e5, 
+      emap = {3732.90, -3519.8, -153520.0, 
               0.19318, -1.7248e-5, 0.0, 
               1.6102, 5.8697e-4, 0.0, 
               0.1622, 10.381, 137.6, 
@@ -33,16 +33,6 @@ WmapS::WmapS(string map_name, string chrom_type) :
       printf(" Error! Cannot recognize the map! %s \n",map_name.c_str());
       exit(EXIT_FAILURE);
    };
-
-   // perform some checks
-   if(ctype!="wsOH")
-     if(ctype!="wsOD")
-       if(ctype!="wsiso") 
-         if(ctype!="wswbH2O")
-           if(ctype!="wswbiso"){
-            printf(" Error! Cannot recognize spec_type %s \n",ctype.c_str());
-            exit(EXIT_FAILURE);
-         }
 
 }
 

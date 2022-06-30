@@ -23,7 +23,7 @@ class Exc{
 
 public:
    Exc(string, string, int, int, double, double, double, int, double, 
-       bool, bool, double);
+       bool, bool, double, bool);
   ~Exc(){};
 
    void run();
@@ -32,17 +32,20 @@ private:
    void readHf(int);
    void readDf(int,bool);
    void readPf(int,bool);
+   void readFzf(int,bool);
    void FTIR();
    void Raman();
    void SFG();
    void moveF();
    void calcR1D(int);
    void calcRm(int);
+   void calcSFG(int);
    void printTCF1D(string, string, vector<complex<double>>);
    void printIw1D(string, string, vector<complex<double>>);
    void fgrid1D();
    void printRamT();
    void printRamS();
+   void scaleTDM();
 
    vector<double> H1;
    vector<double> mu1_x;
@@ -64,6 +67,8 @@ private:
    vector<double> plz_yz0;
    vector<double> plz_zz0;
    vector<double> wgrid1d;
+   vector<double> fzt;
+   vector<double> fzt0;
 
    vector<complex<double>> F;
    vector<complex<double>> mR1D;
@@ -72,6 +77,10 @@ private:
    vector<complex<double>> IRw;
    vector<complex<double>> VVw;
    vector<complex<double>> VHw;
+   vector<complex<double>> sspt;
+   vector<complex<double>> pppt;
+   vector<complex<double>> sspw;
+   vector<complex<double>> pppw;
 
    double tc;
    double dt;
@@ -98,13 +107,15 @@ private:
    const complex<double> complex_zero = {0.,0.};
 
    // default file names
-   string Hfile = "Hamiltonian.bin";
-   string Dfile = "Dipole.bin";
-   string Pfile = "Polarizability.bin";
+   string Hfile  = "Hamiltonian.bin";
+   string Dfile  = "Dipole.bin";
+   string Pfile  = "Polarizability.bin";
+   string Fzfile = "Fz.bin";
 
    ifstream hinfile;
    ifstream dinfile;
    ifstream pinfile;
+   ifstream finfile;
 
 };
 

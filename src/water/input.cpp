@@ -21,10 +21,11 @@ Input::Input(int argc, char ** argv){
        ("nframes",     po::value<int>(&nframes),       "Number of frames to read")
        ("spec_type",   po::value<string>(&job_type),   "Type of spectrum")
        ("gro_file",    po::value<string>(&gro_file),   "gromacs file")
-       ("charge_file", po::value<string>(&chg_file),   "file with charges")
+       ("atoms_file",  po::value<string>(&ams_file),   "file with atomic information: charges, masses")
        ("D2O",         po::value<int>(&nd2o),          "number of D2O molecules")
        ("DOD_overtone",po::value<bool>(&dodov),        "turn on/off DOD overtone in iso mix simulations")
        ("Fc",          po::value<float>(&fc),          "stretch-bend Fermi coupling")
+       ("trdipSFG",    po::value<float>(&trdipSFG),    "distance from O atom and transition dipole for SFG")
        ;
 
        po::variables_map vm;

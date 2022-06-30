@@ -20,7 +20,8 @@ int main(int argc, char ** argv){
    Exc S (input.getHfile(), input.getDfile(), input.getNchrom(),
           input.getNfrm(), input.getdt(), input.gettc(), 
           input.getTrlx(), input.getNavg(), input.getTsep(),
-          input.ifIR(), input.ifRaman(), input.getWavg());
+          input.ifIR(), input.ifRaman(), input.getWavg(),
+          input.ifSFG());
 
    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 

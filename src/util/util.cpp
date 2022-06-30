@@ -2,6 +2,49 @@
 
 using namespace std;
 
+float switchf(float ez)
+{
+//
+// Calculate switching function here.
+// See J. Chem. Phys. 135, 044701 (2011)
+// 
+   float rc, rc2, rc3;
+   float fz1, fz2;
+
+   rc  = SWITCHF_CUT*A0;
+   rc2 = rc*rc;
+   rc3 = rc2*rc;
+   fz1 = 0;
+   fz2 = 0;
+
+   fz1 = 1;
+   if(ez <= rc && ez >= -rc)
+     fz1 = (2.0*rc3 + 3.0*rc2*ez - ez*ez*ez)/(4.0*rc3);
+   
+   if(ez <= -rc) fz1 = 0;
+   
+   fz2 = -1;
+   ez = -ez;
+   if(ez <= rc && ez >= -rc)
+     fz2 = -(2.0*rc3 + 3.0*rc2*ez - ez*ez*ez)/(4.0*rc3);
+   
+   if(ez <= -rc)  fz2 = 0;
+   
+   return (fz1 + fz2);
+}
+
+void removeFile(vector<string> filenames)
+{
+   int result;
+   printf("\n** Old temporary files found and deleted : "); 
+   for(unsigned int ii=0; ii<filenames.size(); ++ii){
+      result = remove(filenames[ii].c_str());
+      if(result == 0 ) //{
+         printf(" %s ",filenames[ii].c_str()); 
+   }
+   printf("\n");
+}
+
 void tstamp(std::string message)
 {
    string timem = currentDateTime();

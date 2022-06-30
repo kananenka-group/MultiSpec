@@ -9,6 +9,9 @@
 
 using namespace std;
 
+inline float ecRvec(const rvec &v1, const int cart)
+{ return v1[cart]; }
+
 inline void copyRRvec(float *out, const rvec v1)
 { for (int ii=0; ii<DIM; ii++) out[ii]=v1[ii]; }
 

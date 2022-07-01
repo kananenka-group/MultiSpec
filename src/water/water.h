@@ -40,7 +40,7 @@ private:
   int ndim;
   int offs = 0;
 
-  const rvec *x;
+  rvec *x;
   rvec box;
   rvec *vOHa, *vOHu, *eft; 
 
@@ -79,6 +79,7 @@ private:
   bool wf = false;;
   bool uncs = false;
   bool DoDv = false;
+  bool moveM=false;
 
   bool ir;
   bool raman;
@@ -91,8 +92,9 @@ private:
   float pz;
   float fc;
   float tdSFG;
+  float rom;
 
-  string water_model_name, water_model_name_caps;
+  string water_model_name;
   string water_map_name;
   string traj_file;
   string chromType;
@@ -124,6 +126,7 @@ private:
   void trDip();
   void trPol();
   void CalcSQuant();
+  void moveMsite();
 
   void writeH();
   void writeD();

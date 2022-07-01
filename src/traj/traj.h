@@ -23,7 +23,7 @@ public:
   int   getNT()     const {return nT;};
   float getT()      const {return t;};
 
-  const rvec* getCoords() const { return x; };
+  rvec* getCoords() const { return x; };
   void getBox(rvec &box) const;
 
 private:

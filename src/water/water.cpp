@@ -77,6 +77,7 @@ water::water(string wm_name, int nfr, string wS_wmap_name, string wB_map_name,
    //////////////////////////////////////////////////////////////////////////////////////
       while(traj.next()==0 && counter<nframes) {
          x = traj.getCoords();
+         if(moveM) moveMsite();
          traj.getBox(box);
          calcEf();
          calcWXPM();
@@ -143,17 +144,45 @@ void water::waterModel()
    printf("\n** Reading water model **\n");
 
    // check water model
-   if(water_model_name=="TIP4P" || water_model_name=="tip4p"){
+   if(water_model_name=="TIP4P" || water_model_name=="tip4p" || water_model_name=="E3B2" || water_model_name=="e3b2"){
       printf("   Water model : TIP4P [ W. L. Jorgensen et al., J. Chem. Phys. 79, 926-935 (1983) ]\n");
-      water_model_name_caps = "TIP4P";
+      if(atoms_in_mol!=4){
+         printf(" Error ! Water model indicated is (TIP4P or E3B2) is inconsistent with *.gro file.\n");
+         exit(EXIT_FAILURE);
+      }
+      moveM = false;
       // set SFG transition dipole
       trdip = 0.67;
       if(tdSFG<0)
          tdSFG = trdip;
       trdip *= A0;
+   }else if(water_model_name=="E3B3" || water_model_name=="e3b3"){
+      printf("   Water model : E3B3 is based on TIP4P/2005 [ Abascal et al. J. Chem. Phys. 123, 234505 (2005) ]\n");
+      if(atoms_in_mol!=4){
+         printf(" Error ! Water model indicated is (TIP4P/2005 or E3B3) is inconsistent with *.gro file.\n");
+         exit(EXIT_FAILURE);
+      }
+      printf("   M-site location will be adjusted to r(OM) = 0.15 A\n"); 
+      moveM = true;
+      rom = 0.15*A0;
+      trdip = 0.67;
+      if(tdSFG<0)
+         tdSFG = trdip;
+      trdip *= A0;
+   }else if(water_model_name=="SPC/E" || water_model_name=="spc/e" || water_model_name=="SPC" || water_model_name=="spc"){
+      printf("   Water model : SPC/E [ Berendsen et al. J. Phys. Chem. 91, 6269 (1987) ]\n");
+      if(atoms_in_mol!=3){
+         printf(" Error ! Water model indicated is (SPC or SPC/E) is inconsistent with *.gro file.\n");
+         exit(EXIT_FAILURE);
+      }
+      moveM = false;
+      trdip = 0.58;
+      if(tdSFG<0)
+         tdSFG = trdip;
+      trdip *= A0;
    }else{
-      // SPC/E trdip = 0.58*A0 Angstrom
       printf(" Error: %s water model is not recognized ! ",water_model_name.c_str()); 
+      printf("        Supported water models are: SPC, SPC/E, TIP4P, TIP4P/2005, E3B2, E3B3.\n");
       exit(EXIT_FAILURE);
    }
    
@@ -852,4 +881,19 @@ void water::com(rvec &vcom)
          addRvec(x[oxyInd[ii]+l], out, aMas[atoms_in_mol*ii+l]);
 
    sclRvec(out, vcom, inv_total_mass);
+}
+
+void water::moveMsite()
+{
+   int tagM;
+   rvec om;
+
+   for(int ii=0; ii<nwater; ++ii){
+      tagM=oxyInd[ii]+3;
+      addRvec(x[tagM],x[oxyInd[ii]],om,-1);
+      pbc(om,box);
+      unitv(om);
+      addRvec(x[oxyInd[ii]],om,x[tagM],rom);
+   }
+
 }

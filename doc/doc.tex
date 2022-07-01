@@ -54,7 +54,9 @@ transition dipole and transition polarizability trajectories for IR, Raman, and 
 \item \textbf{nframes}: (\texttt{int}) how many frames read from *.xtc file and process.
 \item \textbf{atoms\_file}: (\texttt{string}) path to the file containing charges and masses of all atoms. This is a simple three-column file containing atom names matching atoms in 
 *.gro file, corresponding charges and masses. Comment lines must start with \textsc{\#}. An example of such file can be found in Sec.~\ref{app:atomsf}.
-\item \textbf{water\_model}: (\texttt{string}) water model. Supported water models: \texttt{TIP4P}.
+\item \textbf{water\_model}: (\texttt{string}) water model. Supported water models: \texttt{SPC}, \texttt{SPC/E}, \texttt{TIP4P}, \texttt{TIP4P/2005}, \texttt{E3B2}, \texttt{E3B3}.
+Note that in each case \texttt{atoms\_file} is required and must have charges and masses of all atoms of the model making it possible to use any of these models
+with any desired charges.
 \item \textbf{stretch\_map}: (\texttt{string}) spectroscopic map for OH and OD stretch. The following maps have been implemented so far:
 \begin{itemize}
 \item \texttt{li\_2010\_tip4p} from F. Li and J. L. Skinner, J. Chem. Phys. 132, 244504 (2010) 

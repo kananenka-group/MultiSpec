@@ -77,8 +77,8 @@ water::water(string wm_name, int nfr, string wS_wmap_name, string wB_map_name,
    //////////////////////////////////////////////////////////////////////////////////////
       while(traj.next()==0 && counter<nframes) {
          x = traj.getCoords();
-         if(moveM) moveMsite();
          traj.getBox(box);
+         if(moveM) moveMsite();
          calcEf();
          calcWXPM();
          updateEx();
@@ -895,5 +895,4 @@ void water::moveMsite()
       unitv(om);
       addRvec(x[oxyInd[ii]],om,x[tagM],rom);
    }
-
 }

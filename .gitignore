@@ -52,3 +52,6 @@
 *.fdb_latexmk
 *.gz
 *.toc
+
+# test dir
+tests/

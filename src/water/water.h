@@ -70,9 +70,13 @@ private:
   vector<float> m10;
   vector<float> w20b;
 
+  vector<float> omegas;
+  vector<int> w_dist;
+
   int now, nhw, nmw;
   int nh2o, nhod;
   int nd2o = 0;
+  int nbins = 100;
 
   bool ws = true;
   bool wb = false;
@@ -101,6 +105,7 @@ private:
   string jobType;
   string gro_file;
   string ams_file;
+  string w_dist_fname = "freq_hist.dat";
 
   ofstream houtfile;
   ofstream doutfile;
@@ -127,6 +132,7 @@ private:
   void trPol();
   void CalcSQuant();
   void moveMsite();
+  void freqDist();
 
   void writeH();
   void writeD();

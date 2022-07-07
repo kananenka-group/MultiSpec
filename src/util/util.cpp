@@ -2,6 +2,31 @@
 
 using namespace std;
 
+void printv()
+{
+   printf("\n\n");
+   printf("*************************************************************************\n");
+   printf("*                                                                       *\n");
+   printf("*        MultiSpec: a Package for Simulating Vibrational Spectra        *\n");
+   printf("*                       of Condensed-phase Systems                      *\n");
+   printf("*                                                                       *\n");
+   printf("*                              Version 1.0                              *\n");
+   printf("*                               June 2022                               *\n");
+   printf("*              http://github.com/kananenka-group/MultiSpec              *\n");
+   printf("*                                                                       *\n");
+   printf("*             Copyright (c) 2021 - 2022 Alexei A. Kananenka             *\n");
+   printf("*                                                                       *\n");
+   printf("*************************************************************************");
+
+}
+
+int sturges(int size){ 
+// uses Sturges' rule to calculate
+// number of bins for the histogram
+  int nbins = 1 + (int) log2(size);
+  return nbins;
+}
+
 float switchf(float ez)
 {
 //

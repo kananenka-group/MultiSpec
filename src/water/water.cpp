@@ -104,6 +104,9 @@ water::water(string wm_name, int nfr, string wS_wmap_name, string wB_map_name,
    //
    //////////////////////////////////////////////////////////////////////////////////////
 
+   // calc. frequency distributions
+   freqDist();
+
    // write a temporary file for passing some info for subsequent job
    jobfile.write(reinterpret_cast<char*>(&nchromt), sizeof(int));
 
@@ -129,7 +132,7 @@ void water::CalcSQuant()
       printf("   See P. A. Pieniazek et al., J. Chem. Phys. 135, 044701 (2011) for more details.\n");                
       printf("   Cut-off in the switching function: %7.5f [A]\n",SWITCHF_CUT);
       if(tdSFG<0){
-         printf(" Error: Wrong value of SFG transition dipole location ! \n",tdSFG); 
+         printf(" Error: Wrong value of SFG transition dipole location : %7.5f [A] ! \n",tdSFG); 
          exit(EXIT_FAILURE);
       }
       printf("   OH Transition dipole is located %7.5f [A] away from the O atom.\n",tdSFG);
@@ -579,6 +582,8 @@ void water::calcWXPM()
          p10[i] = wms.getp01E(wms.getw01E(efs[i]));
          m10[i] = wms.getm01E(efs[i]);
       }
+      for(int k=0; k<nchroms; ++k)
+         omegas.push_back(w10[k]);
    }
    else if(jobType=="wsiso" || jobType=="wswbiso"){
       // assign OH
@@ -627,12 +632,18 @@ void water::calcWXPM()
             m10[k] = wms.getm01E_OH(efs[k]);
          }
       }
+      for(int k=0; k<nchroms; ++k)
+         omegas.push_back(w10[k]);
    }
 
    // bend stuff
    if(jobType=="wswbH2O" || jobType=="wswbD2O"){
       for(int i=0;i<nchromb;++i)
          w20b[i] = wmb.getw02E(efb[i]);
+   
+      for(int k=0; k<nchromb; ++k)
+         omegas.push_back(w20b[k]);
+
    }else if(jobType=="wswbiso"){
       // H2O molecules
       for(int i=0; i<nh2o; ++i){
@@ -653,7 +664,13 @@ void water::calcWXPM()
          k = mHOD[i];
          w20b[k] = wmb.getw01E_HOD(efb[k]) + wmb.getw12E_HOD(efb[k]);
       }
+
+      for(int k=0; k<nchromb; ++k)
+         omegas.push_back(w20b[k]);
    }
+
+
+   
 
 }
 
@@ -895,4 +912,39 @@ void water::moveMsite()
       unitv(om);
       addRvec(x[oxyInd[ii]],om,x[tagM],rom);
    }
+}
+
+void water::freqDist()
+{
+   unsigned int size = omegas.size();
+   nbins = sturges(size); //1 + (int) log2(size); //(int) sqrt(size);
+   w_dist.resize(nbins,0);
+
+   auto min_f = min_element(omegas.begin(), omegas.end());
+   auto max_f = max_element(omegas.begin(), omegas.end());
+
+   float dw = (*max_f - *min_f)/nbins;
+
+   int idx;
+
+   for(unsigned int k=0; k<size; ++k){
+      idx = (int) (omegas[k] - *min_f)/dw;
+      w_dist[idx] += 1;
+   }
+
+   ofstream w_file;
+   w_file.open(w_dist_fname);
+   if(!w_file.is_open()){
+      printf(" Error! Cannot open file: %s \n",w_dist_fname.c_str());
+      exit(EXIT_FAILURE);
+   }
+
+   printf("\n**  Generating frequency distribution nbins[Sturges' rule]=%d \n",nbins);
+   printf("    Smallest frequency = %7.2f [cm-1], Largest frequency = %7.2f [cm-1]\n",*min_f,*max_f);
+   printf("    Writing frequency distribution histogram into %s \n",w_dist_fname.c_str());
+   for(int t=0; t<nbins; ++t)
+      w_file <<  *min_f + (t+1)*dw/2.0 << "  " << w_dist[t] << endl;
+
+   w_file.close();
+
 }

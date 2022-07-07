@@ -9,6 +9,7 @@ using namespace std;
 
 int main(int argc, char ** argv){
 
+   printv();
    printf("\n\n>>>>>>>>>>>>>>>>>>>> Exciton module <<<<<<<<<<<<<<<<<<<< \n");
    tstamp("\n** Program starts @ ");
    uhstName();

@@ -10,7 +10,8 @@ using namespace std;
 
 int main(int argc, char ** argv){
 
-   printf("\n\n>>>>>>>>>>>>>>>>>>>> Water module <<<<<<<<<<<<<<<<<<<< \n");
+   printv();
+   printf("\n\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Water module <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
    tstamp("\n** Program starts @ ");
    uhstName();
 
@@ -30,7 +31,7 @@ int main(int argc, char ** argv){
 
    timet(start, end);
    tstamp("\n** Program finished @ ");   
-   printf("\n>>>>>>>>>>>>>>>>>>>> Done. <<<<<<<<<<<<<<<<<<<<\n\n");
+   printf("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Done. <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n");
 
    return EXIT_SUCCESS;
 }

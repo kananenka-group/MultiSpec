@@ -264,8 +264,8 @@ void Exc::Raman()
    printTCF1D("vht.dat", "VH", VHT);
    printRamT();
    printRamS();
-   printIw1D("vvw.dat", "VV", VVw);
-   printIw1D("vhw.dat", "VH", VHw);
+   //printIw1D("vvw.dat", "VV", VVw);
+   //printIw1D("vhw.dat", "VH", VHw);
 
    // close files:
    pinfile.close();
@@ -721,6 +721,41 @@ void Exc::printRamT()
 
 void Exc::printRamS()
 {
+   // VVW
+   ofstream o_vvw_file;
+   o_vvw_file.open("vvw.dat");
+   if(!o_vvw_file.is_open()){
+      printf(" Error! Cannot open file: vvw.dat \n");
+      exit(EXIT_FAILURE);
+   }
+
+   printf("     Writing Raman VV Spectra into vvw.dat \n");
+   for(int i=NFFT/2, j=0; i<NFFT; ++i, j++)
+      o_vvw_file << wgrid1d[j] << "  " << VVw[i].real()/navg << endl;
+
+   for(int i=0, j=NFFT/2; i<NFFT/2; ++i, ++j)
+      o_vvw_file << wgrid1d[j] << "  " << VVw[i].real()/navg << endl;
+ 
+   o_vvw_file.close();
+
+   // VHW
+   ofstream o_vhw_file;
+   o_vhw_file.open("vhw.dat");
+   if(!o_vhw_file.is_open()){
+      printf(" Error! Cannot open file: vhw.dat \n");
+      exit(EXIT_FAILURE);
+   }
+
+   printf("     Writing Raman VH Spectra into vhw.dat \n");
+   for(int i=NFFT/2, j=0; i<NFFT; ++i, j++)
+      o_vhw_file << wgrid1d[j] << "  " << VHw[i].real()/navg << endl;
+
+   for(int i=0, j=NFFT/2; i<NFFT/2; ++i, ++j)
+      o_vhw_file << wgrid1d[j] << "  " << VHw[i].real()/navg << endl;
+
+   o_vhw_file.close();
+
+   // ISOW
    ofstream o_isw_file;
    o_isw_file.open("isow.dat");
    if(!o_isw_file.is_open()){
@@ -737,6 +772,7 @@ void Exc::printRamS()
 
    o_isw_file.close();
 
+   // UNPW
    ofstream o_upw_file;
    o_upw_file.open("unpw.dat");
    if(!o_upw_file.is_open()){

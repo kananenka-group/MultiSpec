@@ -81,6 +81,10 @@ private:
    vector<complex<double>> pppt;
    vector<complex<double>> sspw;
    vector<complex<double>> pppw;
+   vector<complex<double>> yyzt;
+   vector<complex<double>> yyzw;
+   vector<complex<double>> spst;
+   vector<complex<double>> spsw;
 
    double tc;
    double dt;

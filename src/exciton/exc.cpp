@@ -119,11 +119,19 @@ void Exc::SFG()
    fill_n(sspt.begin(), ncor, complex_zero);
    pppt.resize(ncor);
    fill_n(pppt.begin(), ncor, complex_zero);
+   yyzt.resize(ncor);
+   fill_n(yyzt.begin(), ncor, complex_zero);
+   spst.resize(ncor);
+   fill_n(spst.begin(), ncor, complex_zero);
 
    sspw.resize(NFFT);
    fill_n(sspw.begin(), NFFT, complex_zero);
    pppw.resize(NFFT);
    fill_n(pppw.begin(), NFFT, complex_zero);
+   yyzw.resize(NFFT);
+   fill_n(yyzw.begin(), NFFT, complex_zero);
+   spsw.resize(NFFT);
+   fill_n(spsw.begin(), NFFT, complex_zero);
 
    printf("\n** Calculating ssp, ppp SFG TCFs **\n");
    for(int ii=0; ii<navg; ++ii){
@@ -153,12 +161,18 @@ void Exc::SFG()
 
    FFT1D(sspt, sspw, dt, NFFT);
    FFT1D(pppt, pppw, dt, NFFT);
+   FFT1D(yyzt, yyzw, dt, NFFT);
+   FFT1D(spst, spsw, dt, NFFT);
 
    printTCF1D("sspt.dat", "SSP", sspt);
    printTCF1D("pppt.dat", "PPP", pppt);
+   printTCF1D("yyzt.dat", "yyz", yyzt);
+   printTCF1D("spst.dat", "SPS", spst);
 
    printIw1D("sspw.dat", "SSP", sspw);
    printIw1D("pppw.dat", "PPP", pppw);
+   printIw1D("yyzw.dat", "yyz", yyzw);
+   printIw1D("spsw.dat", "SPS", spsw);
 
    // close files:
    dinfile.close();
@@ -750,7 +764,7 @@ void Exc::calcSFG(int ti)
   vector<complex<double>> tpt(nchrom, complex_zero);
   vector<complex<double>> work(nchrom, complex_zero);
 
-  complex<double> cxxz, cyyz, czzz;
+  complex<double> cxxz, cyyz, czzz, cyzy, cxzx, czyy, czxx;
 
   // xxz
   for(int ii=0; ii<nchrom; ++ii) mu0[ii] = complex_one*mu1_z0[ii];
@@ -775,11 +789,32 @@ void Exc::calcSFG(int ti)
   cblas_zgemv(CblasRowMajor, CblasNoTrans, lda, lda, &complex_one,
               &F[0], lda, &mu0[0], 1, &complex_zero, &work[0], 1);
   cblas_zdotu_sub(lda, &tpt[0], 1, &work[0], 1, &czzz);
-  
+
+  // yzy
+  for(int ii=0; ii<nchrom; ++ii) mu0[ii] = complex_one*mu1_y0[ii];
+  for(int ii=0; ii<nchrom; ++ii) tpt[ii] = conj(complex_one*plz_yz[ii]);
+
+  cblas_zgemv(CblasRowMajor, CblasNoTrans, lda, lda, &complex_one,
+              &F[0], lda, &mu0[0], 1, &complex_zero, &work[0], 1);
+  cblas_zdotu_sub(lda, &tpt[0], 1, &work[0], 1, &cyzy);
+
+  // xzx
+  for(int ii=0; ii<nchrom; ++ii) mu0[ii] = complex_one*mu1_x0[ii];
+  for(int ii=0; ii<nchrom; ++ii) tpt[ii] = conj(complex_one*plz_xz[ii]);
+
+  cblas_zgemv(CblasRowMajor, CblasNoTrans, lda, lda, &complex_one,
+              &F[0], lda, &mu0[0], 1, &complex_zero, &work[0], 1);
+  cblas_zdotu_sub(lda, &tpt[0], 1, &work[0], 1, &cxzx);
+
   double dtc = (double) ti;
   double exptc = exp(-1.0*dt*dtc/(2.0*rlx_time));
 
+  yyzt[ti] += cyyz*exptc;
+
+  // polarizations
+  // 1. xxz = yyz here we actually double statistics by taking the average
   sspt[ti] += 0.5*(cxxz+cyyz)*exptc;
+  spst[ti] += 0.5*(cyzy+cxzx)*exptc;
   pppt[ti] += (-0.5*cxxz-0.5*cyyz+czzz)*exptc;
 
 }

@@ -14,6 +14,8 @@
 
 using namespace std;
 
+int sturges(int);
+void printv();
 void tstamp(std::string message);
 void timet(std::chrono::steady_clock::time_point start, std::chrono::steady_clock::time_point end);
 const std::string currentDateTime();

@@ -56,3 +56,7 @@
 
 # test dir
 build/
+
+#version dir
+1.0/
+1.1/

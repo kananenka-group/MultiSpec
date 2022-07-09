@@ -939,7 +939,7 @@ void water::freqDist()
       exit(EXIT_FAILURE);
    }
 
-   printf("\n**  Generating frequency distribution nbins[Sturges' rule]=%d \n",nbins);
+   printf("\n** Generating frequency distribution nbins[Sturges' rule]=%d \n",nbins);
    printf("    Smallest frequency = %7.2f [cm-1], Largest frequency = %7.2f [cm-1]\n",*min_f,*max_f);
    printf("    Writing frequency distribution histogram into %s \n",w_dist_fname.c_str());
    for(int t=0; t<nbins; ++t)

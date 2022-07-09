@@ -23,11 +23,11 @@ Exc::Exc(string h_file_name, string d_file_name, int nchr, int nt, double deltaT
    }
 
    printf("\n** Setting up calculation: **\n");
-   printf("     Time step: %7.5f [ps] Correlation time: %7.5f [ps] \n", dt, tc);
-   printf("     Statistical averaging will be performed using %d slices \n",navg);
-   printf("     Slices will be separated by %7.5f [ps] \n",sep_time);
-   printf("     Input number of frames: %d \n",ntime);
-   printf("     %d frames are needed to calculate spectra \n",nfrmn);
+   printf("   Time step: %7.5f [ps] Correlation time: %7.5f [ps] \n", dt, tc);
+   printf("   Statistical averaging will be performed using %d slices \n",navg);
+   printf("   Slices will be separated by %7.5f [ps] \n",sep_time);
+   printf("   Input number of frames: %d \n",ntime);
+   printf("   %d frames are needed to calculate spectra \n",nfrmn);
 
 }
 
@@ -89,7 +89,7 @@ void Exc::SFG()
    finfile.clear();
    finfile.seekg(0, ios::beg);
 
-   printf("     Relaxation time: %7.5f [ps] \n",rlx_time);
+   printf("   Relaxation time: %7.5f [ps] \n",rlx_time);
 
    // allocate variables
    plz_xx0.resize(nchrom);
@@ -169,10 +169,10 @@ void Exc::SFG()
    printTCF1D("yyzt.dat", "yyz", yyzt);
    printTCF1D("spst.dat", "SPS", spst);
 
-   printIw1D("sspw.dat", "SSP", sspw);
-   printIw1D("pppw.dat", "PPP", pppw);
-   printIw1D("yyzw.dat", "yyz", yyzw);
-   printIw1D("spsw.dat", "SPS", spsw);
+   printIw1D("sspw.dat", "SSP", sspw, 2);
+   printIw1D("pppw.dat", "PPP", pppw, 2);
+   printIw1D("yyzw.dat", "yyz", yyzw, 2);
+   printIw1D("spsw.dat", "SPS", spsw, 2);
 
    // close files:
    dinfile.close();
@@ -203,7 +203,7 @@ void Exc::Raman()
    pinfile.clear();
    pinfile.seekg(0, ios::beg);
 
-   printf("     Relaxation time: %7.5f [ps] \n",rlx_time);
+   printf("   Relaxation time: %7.5f [ps] \n",rlx_time);
 
    // allocate memory
    plz_xx0.resize(nchrom);
@@ -257,15 +257,15 @@ void Exc::Raman()
    ivv = simpsonInt(wgrid1d, VVw);
    ivh = simpsonInt(wgrid1d, VHw);
    dr = ivh/ivv;
-   printf("     Average depolarization ratio [Appl. Opt. 52, 2503 (2013)] = %7.5f \n",dr);
+   printf("   Average depolarization ratio [Appl. Opt. 52, 2503 (2013)] = %7.5f \n",dr);
 
    // print stuff..
    printTCF1D("vvt.dat", "VV", VVT);
    printTCF1D("vht.dat", "VH", VHT);
    printRamT();
    printRamS();
-   //printIw1D("vvw.dat", "VV", VVw);
-   //printIw1D("vhw.dat", "VH", VHw);
+   printIw1D("vvw.dat", "VV", VVw, 1);
+   printIw1D("vhw.dat", "VH", VHw, 1);
 
    // close files:
    pinfile.close();
@@ -295,7 +295,7 @@ void Exc::FTIR()
    dinfile.clear();
    dinfile.seekg(0, ios::beg);
 
-   printf("     Relaxation time: %7.5f [ps] \n",rlx_time);
+   printf("   Relaxation time: %7.5f [ps] \n",rlx_time);
 
    // allocate memory
    mu1_x.resize(nchrom);
@@ -333,7 +333,8 @@ void Exc::FTIR()
    FFT1D(mR1D, IRw, dt, NFFT);
 
    printTCF1D("irt.dat", "IR", mR1D);
-   printIw1D("irw.dat", "IR", IRw);
+
+   printIw1D("irw.dat", "IR", IRw, 1);
 
    // close files:
    dinfile.close();
@@ -447,7 +448,7 @@ void Exc::printTCF1D(string fname, string stype, vector<complex<double>> R1D)
       exit(EXIT_FAILURE); 
    }
 
-   printf("     Writing %s TCF into %s \n",stype.c_str(),fname.c_str());
+   printf("   Writing %s TCF into %s \n",stype.c_str(),fname.c_str());
    for(int t1=0; t1<ncor; ++t1)
       o_ir_file << t1*dt << "  " << R1D[t1].real()/navg << "  " << R1D[t1].imag()/navg << endl;
     
@@ -502,7 +503,7 @@ void Exc::readDf(int nread, bool st)
 
 }
 
-void Exc::printIw1D(string specf, string stype, vector<complex<double>> Iw)
+void Exc::printIw1D(string specf, string stype, vector<complex<double>> Iw, int mode)
 {
    ofstream o_iw_file;
    o_iw_file.open(specf);
@@ -511,13 +512,22 @@ void Exc::printIw1D(string specf, string stype, vector<complex<double>> Iw)
       exit(EXIT_FAILURE);
    }
 
-   printf("     Writing %s Spectra into %s \n",stype.c_str(),specf.c_str());
-   for(int i=NFFT/2, j=0; i<NFFT; ++i, j++)
-      o_iw_file << wgrid1d[j] << "  " << Iw[i].real()/navg << "  " << Iw[i].imag()/navg << endl;
+   printf("   Writing %s Spectra into %s \n",stype.c_str(),specf.c_str());
+   for(int i=NFFT/2, j=0; i<NFFT; ++i, j++){
+      if(mode==1){
+         o_iw_file << wgrid1d[j] << "  " << Iw[i].real()/navg << endl;
+      }else if(mode==2){
+         o_iw_file << wgrid1d[j] << "  " << Iw[i].real()/navg << "  " << Iw[i].imag()/navg << endl;
+      }
+   }
 
-   for(int i=0, j=NFFT/2; i<NFFT/2; ++i, ++j)
-      o_iw_file << wgrid1d[j] << "  " << Iw[i].real()/navg << "  "<< Iw[i].imag()/navg << endl;
-
+   for(int i=0, j=NFFT/2; i<NFFT/2; ++i, ++j){
+      if(mode==1){
+         o_iw_file << wgrid1d[j] << "  " << Iw[i].real()/navg << endl;
+      }else if(mode==2){
+         o_iw_file << wgrid1d[j] << "  " << Iw[i].real()/navg << "  "<< Iw[i].imag()/navg << endl;
+      }
+   }
    o_iw_file.close();
 
 }
@@ -698,7 +708,7 @@ void Exc::printRamT()
       exit(EXIT_FAILURE);
    }
 
-   printf("     Writing Raman isotropic TCF into isot.dat \n");
+   printf("   Writing Raman isotropic TCF into isot.dat \n");
    for(int t1=0; t1<ncor; ++t1)
       o_r_file << t1*dt << "  " << (VVT[t1].real() - 0.75*VHT[t1].real())/navg << "  " << (VVT[t1].imag() - 0.75*VHT[t1].imag())/navg << endl;
 
@@ -711,7 +721,7 @@ void Exc::printRamT()
       exit(EXIT_FAILURE);
    }
 
-   printf("     Writing Raman unpolarized TCF into unpt.dat \n");
+   printf("   Writing Raman unpolarized TCF into unpt.dat \n");
    for(int t1=0; t1<ncor; ++t1)
       o_ru_file << t1*dt << "  " << (VVT[t1].real() + VHT[t1].real())/navg << "  " << (VVT[t1].imag() + VHT[t1].imag())/navg << endl;
 
@@ -729,7 +739,7 @@ void Exc::printRamS()
       exit(EXIT_FAILURE);
    }
 
-   printf("     Writing Raman VV Spectra into vvw.dat \n");
+   printf("   Writing Raman VV Spectra into vvw.dat \n");
    for(int i=NFFT/2, j=0; i<NFFT; ++i, j++)
       o_vvw_file << wgrid1d[j] << "  " << VVw[i].real()/navg << endl;
 
@@ -746,7 +756,7 @@ void Exc::printRamS()
       exit(EXIT_FAILURE);
    }
 
-   printf("     Writing Raman VH Spectra into vhw.dat \n");
+   printf("   Writing Raman VH Spectra into vhw.dat \n");
    for(int i=NFFT/2, j=0; i<NFFT; ++i, j++)
       o_vhw_file << wgrid1d[j] << "  " << VHw[i].real()/navg << endl;
 
@@ -763,7 +773,7 @@ void Exc::printRamS()
       exit(EXIT_FAILURE);
    }
 
-   printf("     Writing Raman isotropic Spectra into isow.dat \n");
+   printf("   Writing Raman isotropic Spectra into isow.dat \n");
    for(int i=NFFT/2, j=0; i<NFFT; ++i, j++)
       o_isw_file << wgrid1d[j] << "  " << (VVw[i].real() - (4.0/3.0)*VHw[i].real())/navg << endl;
 
@@ -780,7 +790,7 @@ void Exc::printRamS()
       exit(EXIT_FAILURE);
    }
 
-   printf("     Writing Raman unpolarized Spectra into unpw.dat \n");
+   printf("   Writing Raman unpolarized Spectra into unpw.dat \n");
    for(int i=NFFT/2, j=0; i<NFFT; ++i, j++)
       o_upw_file << wgrid1d[j] << "  " << (VVw[i].real() + VHw[i].real())/navg << endl;
 

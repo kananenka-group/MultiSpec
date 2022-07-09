@@ -41,7 +41,7 @@ private:
    void calcRm(int);
    void calcSFG(int);
    void printTCF1D(string, string, vector<complex<double>>);
-   void printIw1D(string, string, vector<complex<double>>);
+   void printIw1D(string, string, vector<complex<double>>, int);
    void fgrid1D();
    void printRamT();
    void printRamS();
@@ -90,7 +90,7 @@ private:
    double dt;
    double rlx_time;
    double sep_time;
-   double w_avg = 0.0;
+   double w_avg;
 
    int nchrom;
    int ntime;

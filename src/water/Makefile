@@ -2,7 +2,6 @@ exe     = water_gen
 CXX     = g++
 
 SOFTDIR=/work/akanane/sw/MultiSpec/src/software/xdrfile/build
-BUILDIR=/work/akanane/sw/MultiSpec/build
 
 INC     = -I$(SOFTDIR)/include/xdrfile
 FLAGS   = -O2 -march=native -Wall -std=c++11 -MMD -MP -fopenmp -DUSEOMP

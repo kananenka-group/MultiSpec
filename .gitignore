@@ -41,6 +41,7 @@
 *.sbatch
 *.err
 *.out
+*.sh
 
 # binary files
 *.bin
@@ -54,6 +55,4 @@
 *.toc
 
 # test dir
-tests/
-vtests/
-v1.0/
+build/

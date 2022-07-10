@@ -16,6 +16,18 @@
 \maketitle
 \tableofcontents
 
+\section{Installation}
+MultiSpec can be downloaded and installed using cmake:
+\begin{verbatim}
+$ git clone https://github.com/kananenka-group/MultiSpec.git
+$ cd ./MultiSpec/
+$ mkdir build 
+$ cmake -S . -B build
+$ cmake --build build
+\end{verbatim}
+
+Note that MultiSpec uses Boost and Blas, both are needed to be installed before attempting to install MultiSpec.
+
 \section{Exciton module}
 Exciton module is the main module that computes spectra. Currently only linear IR and Raman spectra are implemented.
 

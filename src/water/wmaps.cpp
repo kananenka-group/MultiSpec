@@ -37,47 +37,43 @@ WmapS::WmapS(string map_name, string chrom_type) :
 }
 
 float WmapS::getw01E(float E){ 
-   if(ctype=="wsOH" || ctype=="wswbH2O")
-   {
-      return getw01E_OH(E);
+   float rv=0.0;
+   if(ctype=="wsOH" || ctype=="wswbH2O"){
+      rv = getw01E_OH(E);
+   }else if(ctype=="wsOD" || ctype=="wswbD2O"){
+      rv = getw01E_OD(E);
    }
-   else if(ctype=="wsOD" || ctype=="wswbD2O")
-   {
-      return getw01E_OD(E);
-   }
+   return rv;
 }
 
 float WmapS::getm01E(float E){
-   if(ctype=="wsOH" || ctype=="wswbH2O")
-   {
-      return getm01E_OH(E);
+   float rv = 0.0;
+   if(ctype=="wsOH" || ctype=="wswbH2O"){
+      rv = getm01E_OH(E);
+   }else if(ctype=="wsOD" || ctype=="wswbD2O"){
+      rv = getm01E_OD(E);
    }
-   else if(ctype=="wsOD" || ctype=="wswbD2O")
-   {
-      return getm01E_OD(E);
-   }
+   return rv;
 }
 
 float WmapS::getx01E(float E){
-   if(ctype=="wsOH" || ctype=="wswbH2O")
-   {
-      return getx01E_OH(E);
+   float rv = 0.0;
+   if(ctype=="wsOH" || ctype=="wswbH2O"){
+      rv = getx01E_OH(E);
+   }else if(ctype=="wsOD" || ctype=="wswbD2O"){
+      rv = getx01E_OD(E);
    }
-   else if(ctype=="wsOD" || ctype=="wswbD2O")
-   {
-      return getx01E_OD(E);
-   }
+   return rv;
 }
 
 float WmapS::getp01E(float E){
-   if(ctype=="wsOH" || ctype=="wswbH2O")
-   {
-      return getp01E_OH(E);
+   float rv = 0.0;
+   if(ctype=="wsOH" || ctype=="wswbH2O"){
+      rv = getp01E_OH(E);
+   }else if(ctype=="wsOD" || ctype=="wswbD2O"){
+      rv = getp01E_OD(E);
    }
-   else if(ctype=="wsOD" || ctype=="wswbD2O")
-   {
-      return getp01E_OD(E);
-   }
+   return rv;
 }
 
 float WmapS::getw01E_OH(float E)

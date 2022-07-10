@@ -1,14 +1,16 @@
 #include "water.h"
 
-water::water(string wm_name, int nfr, string wS_wmap_name, string wB_map_name, 
+water::water(string wm_name, string wS_wmap_name, string wB_map_name, 
              string job_type, string traj_file_name, string gro_file_name, 
-             string atoms_file_name, bool doir, bool doraman, bool dosfg, 
-             int d2o, float fermi_c, bool doDoDov, float trdip_for_SFG) : 
-             water_model_name(wm_name), nframes(nfr), 
+             string atoms_file_name, int nfr, int d2o, 
+             bool doir, bool doraman, bool dosfg, 
+             bool doDoDov, float trdip_for_SFG, float fermi_c) : 
+             water_model_name(wm_name), 
              jobType(job_type), traj_file(traj_file_name), gro_file(gro_file_name), 
              ams_file(atoms_file_name), wms(wS_wmap_name, job_type), 
-             wmb(wB_map_name, job_type), ir(doir), raman(doraman), sfg(dosfg), 
-             nd2o(d2o), fc(fermi_c), DoDv(doDoDov), tdSFG(trdip_for_SFG)
+             wmb(wB_map_name, job_type), nframes(nfr), nd2o(d2o), 
+             ir(doir), raman(doraman), sfg(dosfg), DoDv(doDoDov),
+             tdSFG(trdip_for_SFG), fc(fermi_c)
 {
    // removing old files
    vector<string> files_to_remove;
@@ -267,7 +269,7 @@ void water::readGro(){
    printf("\n** Reading Gromacs file: %s **\n",gro_file.c_str());
 
    string line; 
-   bool readFlag=false;
+   //bool readFlag=false;
 
    int counter=0;
 

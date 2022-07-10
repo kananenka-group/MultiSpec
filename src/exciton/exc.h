@@ -22,8 +22,9 @@ using namespace std;
 class Exc{
 
 public:
-   Exc(string, string, int, int, double, double, double, int, double, 
-       bool, bool, double, bool);
+   Exc(string, string, string, int, int, int, 
+       double, double, double, double, double,
+       bool, bool, bool);
   ~Exc(){};
 
    void run();
@@ -86,11 +87,10 @@ private:
    vector<complex<double>> spst;
    vector<complex<double>> spsw;
 
-   double tc;
-   double dt;
-   double rlx_time;
-   double sep_time;
-   double w_avg;
+   string Hfile  = "Hamiltonian.bin";
+   string Dfile  = "Dipole.bin";
+   string Pfile  = "Polarizability.bin";
+   string Fzfile = "Fz.bin";
 
    int nchrom;
    int ntime;
@@ -101,6 +101,12 @@ private:
    int ndim1;
    int NFFT = 4096;
 
+   double dt;
+   double tc;
+   double rlx_time;
+   double sep_time;
+   double w_avg;
+
    bool ir;
    bool raman;
    bool sfg;
@@ -110,11 +116,6 @@ private:
    const complex<double> complex_one  = {1.,0.};
    const complex<double> complex_zero = {0.,0.};
 
-   // default file names
-   string Hfile  = "Hamiltonian.bin";
-   string Dfile  = "Dipole.bin";
-   string Pfile  = "Polarizability.bin";
-   string Fzfile = "Fz.bin";
 
    ifstream hinfile;
    ifstream dinfile;

@@ -2,15 +2,15 @@
 
 using namespace std;
 
-Exc::Exc(string h_file_name, string d_file_name, int nchr, int nt, double deltaT,
-         double corrT, double trel, int nv, double tsep, bool irs, bool ramans,
-         double wav, bool sfgs):
-         Hfile(h_file_name), Dfile(d_file_name), nchrom(nchr), ntime(nt), dt(deltaT),
-         tc(corrT), rlx_time(trel), navg(nv), sep_time(tsep), ir(irs), raman(ramans),
-         sfg(sfgs), w_avg(wav)
+Exc::Exc(string h_file_name, string d_file_name, string p_file_name, int nchr, int nt, 
+         int nv, double deltaT, double corrT, double trel, double tsep, double wav, 
+         bool irs, bool ramans, bool sfgs):
+         Hfile(h_file_name), Dfile(d_file_name), Pfile(p_file_name), nchrom(nchr), 
+         ntime(nt), navg(nv), dt(deltaT), tc(corrT), rlx_time(trel), sep_time(tsep), 
+         w_avg(wav), ir(irs), raman(ramans), sfg(sfgs)
 {
    // setting up some variables 
-   int nfrmn;
+   int nfrmn = 0;
    if (ir || raman || sfg){
       ncor = (int) (tc/dt);
       nsep = (int) (sep_time/dt); 
@@ -395,8 +395,8 @@ void Exc::moveF()
 
   memcpy(&Ht[0], &H1[0], sizeof(double)*nchrom2);
 
-  if (info = LAPACKE_dsyevd(LAPACK_ROW_MAJOR, 'V', 'U', lda, &Ht[0], lda, &W[0]) != 0)
-  {
+  info = LAPACKE_dsyevd(LAPACK_ROW_MAJOR, 'V', 'U', lda, &Ht[0], lda, &W[0]);
+  if(info != 0){
      printf("Error! LAPACKE_dsyeved returned \n");
      exit(EXIT_FAILURE);
   }

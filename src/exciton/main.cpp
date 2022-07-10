@@ -18,11 +18,10 @@ int main(int argc, char ** argv){
    Input input(argc, argv);   
  
    // run simulation
-   Exc S (input.getHfile(), input.getDfile(), input.getNchrom(),
-          input.getNfrm(), input.getdt(), input.gettc(), 
-          input.getTrlx(), input.getNavg(), input.getTsep(),
-          input.ifIR(), input.ifRaman(), input.getWavg(),
-          input.ifSFG());
+   Exc S (input.getHfile(), input.getDfile(), input.getPfile(), 
+          input.getNchrom(), input.getNfrm(), input.getNavg(),
+          input.getdt(), input.gettc(), input.getTrlx(), input.getTsep(),
+          input.getWavg(), input.ifIR(), input.ifRaman(), input.ifSFG());
 
    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 

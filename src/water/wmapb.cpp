@@ -59,11 +59,13 @@ WmapB::WmapB(string map_name, string chrom_type) :
 }
 
 float WmapB::getw02E(float E){  
+   float rv = 0.0;
    if(ctype=="wswbH2O"){ 
-     return getw01E_HOH(E) + getw12E_HOH(E);
+     rv = getw01E_HOH(E) + getw12E_HOH(E);
    }else if(ctype=="wswbD2O"){
-     return getw01E_DOD(E) + getw12E_DOD(E);
+     rv = getw01E_DOD(E) + getw12E_DOD(E);
    }
+   return rv;
 }
 
 float WmapB::getw01E_HOH(float E)

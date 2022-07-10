@@ -20,18 +20,34 @@ using namespace std;
 class water{
 
 public:
-   water(string, int, string, string, string, string, string, 
-         string, bool, bool, bool, int, float, bool, float);
+   water(string, string, string, string, string, string, 
+         string, int, int, bool, bool, bool, bool, float, float);
 
   ~water();
 
 private:
+  string water_model_name;
+  string jobType;
+  string traj_file;
+  string gro_file;
+  string ams_file;
+
   WmapS wms;
   WmapB wmb;
 
+  int nframes;
+  int nd2o = 0;
+  
+  bool ir;
+  bool raman;
+  bool sfg;
+  bool DoDv = false;
+
+  float tdSFG;
+  float fc;
+
   int atoms_in_mol;
   int natoms;
-  int nframes;
   int nwater;
   int nchroms = 0;
   int nchromb = 0;
@@ -75,36 +91,24 @@ private:
 
   int now, nhw, nmw;
   int nh2o, nhod;
-  int nd2o = 0;
   int nbins = 100;
 
   bool ws = true;
   bool wb = false;
   bool wf = false;;
   bool uncs = false;
-  bool DoDv = false;
   bool moveM=false;
 
-  bool ir;
-  bool raman;
-  bool sfg;
 
   float total_charge;
   float total_mass;
   float inv_total_mass;
   float trdip;
   float pz;
-  float fc;
-  float tdSFG;
   float rom;
 
-  string water_model_name;
   string water_map_name;
-  string traj_file;
   string chromType;
-  string jobType;
-  string gro_file;
-  string ams_file;
   string w_dist_fname = "freq_hist.dat";
 
   ofstream houtfile;

@@ -20,7 +20,7 @@
 MultiSpec can be downloaded and installed using cmake:
 \begin{verbatim}
 $ git clone https://github.com/kananenka-group/MultiSpec.git
-$ cd ./MultiSpec/
+$ cd ./MultiSpec/src
 $ mkdir build 
 $ cmake -S . -B build
 $ cmake --build build
@@ -109,6 +109,12 @@ calculations of isotope mixtures. This option only works with \texttt{--spec\_ty
 OH-stretch transition dipole along the O-H(D) bond. This only works with  
 \texttt{--SFG=1}.
 
+\item \textbf{intrac}: (\texttt{bool}) turns on and off OH stretch intramolecular couplings, options: \{1,0\}. Default value is 1.
+
+\item \textbf{intercOH}: (\texttt{bool}) turns on and off OH stretch intermolecular couplings, options: \{1,0\}. Default value is 1.
+
+\end{itemize}
+
 \subsection{Spectroscopic maps}
 
 \section{Examples}
@@ -121,7 +127,7 @@ OH-stretch transition dipole along the O-H(D) bond. This only works with
 
  
 
-\end{itemize}
+
 
 \begin{appendix}
 \section{\label{app:atomsf}atoms\_file}

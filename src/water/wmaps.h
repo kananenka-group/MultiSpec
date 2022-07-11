@@ -14,7 +14,7 @@ using namespace std;
 class WmapS{
 
 public:
-  WmapS(string, string);
+  WmapS(string, string, bool);
   ~WmapS() {};
 
   float getw01E(const float);
@@ -38,6 +38,8 @@ private:
 
   eFmapS emap; 
   string ctype;
+
+  bool intrac;
 
 };
 

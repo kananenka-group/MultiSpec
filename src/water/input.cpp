@@ -26,6 +26,8 @@ Input::Input(int argc, char ** argv){
        ("DOD_overtone",po::value<bool>(&dodov),        "turn on/off DOD overtone in iso mix simulations")
        ("Fc",          po::value<float>(&fc),          "stretch-bend Fermi coupling")
        ("trdipSFG",    po::value<float>(&trdipSFG),    "distance from O atom and transition dipole for SFG")
+       ("intrac",      po::value<bool>(&intrac),       "intramolecular OH stretch coupling")
+       ("intercOH",    po::value<bool>(&intercs),      "OH stretch intermolecular coupling")
        ;
 
        po::variables_map vm;

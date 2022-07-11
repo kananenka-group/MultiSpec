@@ -29,6 +29,8 @@ public:
   bool ifRaman()         const { return raman; }
   bool ifSFG()           const { return sfg; }
   bool ifDODv()          const { return dodov; }
+  bool getIntraC()       const { return intrac; }
+  bool getInermcs()      const { return intercs;}
   float getFc()          const { return fc; }
   float getTDSFG()       const { return trdipSFG; }
 
@@ -44,6 +46,8 @@ private:
   float trdipSFG=-10;
 
   bool dodov = false;
+  bool intrac= true;
+  bool intercs=true;
 
   string xtc_file    = "traj.xtc";
   string stretch_map_name; 

@@ -2,8 +2,8 @@
 
 using namespace std;
 
-WmapS::WmapS(string map_name, string chrom_type) :
-             ctype(chrom_type)
+WmapS::WmapS(string map_name, string chrom_type, bool intramolOHc) :
+             ctype(chrom_type), intrac(intramolOHc)
 {
    printf("\n** Reading Stretch Map **\n");
 
@@ -33,6 +33,9 @@ WmapS::WmapS(string map_name, string chrom_type) :
       printf(" Error! Cannot recognize the map! %s \n",map_name.c_str());
       exit(EXIT_FAILURE);
    };
+
+   if(!intrac)
+      printf("   Note! OH-stretch intramolecular couplings are set to 0.\n");
 
 }
 
@@ -104,7 +107,7 @@ float WmapS::getcnn(const float Ei, const float Ej)
 {
 //
 //  Intramolecular coupling of two hydroxyl stretches
-//
+// 
    float xi = 0.0; 
    float xj = 0.0;
    float pi = 0.0;
@@ -113,24 +116,24 @@ float WmapS::getcnn(const float Ei, const float Ej)
    float wj = 0.0;
    float wc = 0.0;
 
-   if(ctype=="wsOH"){
-      wi = getw01E_OH(Ei);
-      wj = getw01E_OH(Ej);
-      xi = getx01E_OH(wi);
-      xj = getx01E_OH(wj);
-      pi = getp01E_OH(wi);
-      pj = getp01E_OH(wj);
+   if(intrac){
+      if(ctype=="wsOH"){
+         wi = getw01E_OH(Ei);
+         wj = getw01E_OH(Ej);
+         xi = getx01E_OH(wi);
+         xj = getx01E_OH(wj);
+         pi = getp01E_OH(wi);
+         pj = getp01E_OH(wj);
+      }else if(ctype=="wsOD"){
+         wi = getw01E_OD(Ei);
+         wj = getw01E_OD(Ej);
+         xi = getx01E_OD(wi);
+         xj = getx01E_OD(wj);
+         pi = getp01E_OD(wi);
+         pj = getp01E_OD(wj);
+      }
+      wc = (emap.wij0 + emap.wije*(Ei + Ej))*xi*xj + emap.wijpp*pi*pj;
    }
-   else if(ctype=="wsOD")
-   {
-      wi = getw01E_OD(Ei);
-      wj = getw01E_OD(Ej);
-      xi = getx01E_OD(wi);
-      xj = getx01E_OD(wj);
-      pi = getp01E_OD(wi);
-      pj = getp01E_OD(wj);
-   }
-   wc = (emap.wij0 + emap.wije*(Ei + Ej))*xi*xj + emap.wijpp*pi*pj;
    return wc;
 }
 

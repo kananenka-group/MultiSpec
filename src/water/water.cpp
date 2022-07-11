@@ -2,14 +2,14 @@
 
 water::water(string wm_name, string wS_wmap_name, string wB_map_name, 
              string job_type, string traj_file_name, string gro_file_name, 
-             string atoms_file_name, int nfr, int d2o, 
-             bool doir, bool doraman, bool dosfg, 
-             bool doDoDov, float trdip_for_SFG, float fermi_c) : 
-             water_model_name(wm_name), 
-             jobType(job_type), traj_file(traj_file_name), gro_file(gro_file_name), 
-             ams_file(atoms_file_name), wms(wS_wmap_name, job_type), 
+             string atoms_file_name, int nfr, int d2o,  bool doir, 
+             bool doraman, bool dosfg, bool doDoDov, bool intrac, 
+             bool intermc_OHs, float trdip_for_SFG, float fermi_c) : 
+             water_model_name(wm_name), jobType(job_type), 
+             traj_file(traj_file_name), gro_file(gro_file_name), 
+             ams_file(atoms_file_name), wms(wS_wmap_name, job_type, intrac), 
              wmb(wB_map_name, job_type), nframes(nfr), nd2o(d2o), 
-             ir(doir), raman(doraman), sfg(dosfg), DoDv(doDoDov),
+             ir(doir), raman(doraman), sfg(dosfg), DoDv(doDoDov), intermcs(intermc_OHs),
              tdSFG(trdip_for_SFG), fc(fermi_c)
 {
    // removing old files
@@ -84,7 +84,7 @@ water::water(string wm_name, string wS_wmap_name, string wB_map_name,
          calcEf();
          calcWXPM();
          updateEx();
-         intermC();
+         if(intermcs) intermC();
          if(ir) trDip();
          if(raman) trPol();
          writeH();
@@ -942,8 +942,8 @@ void water::freqDist()
    }
 
    printf("\n** Generating frequency distribution nbins[Sturges' rule]=%d \n",nbins);
-   printf("    Smallest frequency = %7.2f [cm-1], Largest frequency = %7.2f [cm-1]\n",*min_f,*max_f);
-   printf("    Writing frequency distribution histogram into %s \n",w_dist_fname.c_str());
+   printf("   Smallest frequency = %7.2f [cm-1], Largest frequency = %7.2f [cm-1]\n",*min_f,*max_f);
+   printf("   Writing frequency distribution histogram into %s \n",w_dist_fname.c_str());
    for(int t=0; t<nbins; ++t)
       w_file <<  *min_f + (t+1)*dw/2.0 << "  " << w_dist[t] << endl;
 

@@ -65,7 +65,7 @@ Input::Input(int argc, char ** argv){
    jobfile.close();
 
    // print:
-   printf("     Number of chromophores: %d \n",nchrom);
+   printf("   Number of chromophores: %d \n",nchrom);
 
 }
 

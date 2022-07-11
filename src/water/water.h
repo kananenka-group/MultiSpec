@@ -21,7 +21,8 @@ class water{
 
 public:
    water(string, string, string, string, string, string, 
-         string, int, int, bool, bool, bool, bool, float, float);
+         string, int, int, bool, bool, bool, bool, bool,
+         bool, float, float);
 
   ~water();
 
@@ -42,6 +43,8 @@ private:
   bool raman;
   bool sfg;
   bool DoDv = false;
+  bool intrac;
+  bool intermcs;
 
   float tdSFG;
   float fc;

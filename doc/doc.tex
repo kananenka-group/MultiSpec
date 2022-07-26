@@ -2,9 +2,17 @@
 
 \usepackage{amsmath,amssymb}
 \usepackage[superscript]{cite}
-\usepackage{cleveref}
+%\usepackage{cleveref}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=black,
+    pdfpagemode=FullScreen,
+    }
 
 \renewcommand\labelitemi{-{}-}
 
@@ -45,6 +53,7 @@ Exciton module is the main module that computes spectra. Currently only linear I
 \item \textbf{nframes}: (\texttt{int}) how many frames are stored in trajectory files.
 \item \textbf{T1}: (\texttt{double}) T$_1$ time, life-time of the first exited state.
 \item \textbf{navg}: (\texttt{int}) the number of segments the input trajectories will be divided into and used for statistical averaging.
+\item \textbf{tstart}: (\texttt{double}) Starting time for calculating spectra (ps). Rewind the trajectory to this time and start calculating spectra. 
 \item \textbf{tsep}: (\texttt{double}) time separation in ps between segments.
 \item \textbf{w\_avg}: (\texttt{double}) average frequency (optional) helps mitigate numerical instabilities.
 
@@ -70,10 +79,7 @@ transition dipole and transition polarizability trajectories for IR, Raman, and 
 Note that in each case \texttt{atoms\_file} is required and must have charges and masses of all atoms of the model making it possible to use any of these models
 with any desired charges.
 \item \textbf{stretch\_map}: (\texttt{string}) spectroscopic map for OH and OD stretch. The following maps have been implemented so far:
-\begin{itemize}
-\item \texttt{li\_2010\_tip4p} from F. Li and J. L. Skinner, J. Chem. Phys. 132, 244504 (2010) 
-\item  \texttt{gruenbaum\_tip4p\_2013} from S. M. Gruenbaum et al., J. Chem. Theory Comput. 9, 3109 (2013)
-\end{itemize}
+ \texttt{li\_2010\_tip4p},  \texttt{gruenbaum\_2013\_tip4p}, and \texttt{auer\_2008\_spce}. See Sec.~\ref{sec:wmaps} for more details.
 
 \item \textbf{bend\_map}: (\texttt{string}) spectroscopic map for HOH and DOD bend. 
 The following maps have been implemented so far:
@@ -115,15 +121,86 @@ OH-stretch transition dipole along the O-H(D) bond. This only works with
 
 \end{itemize}
 
-\subsection{Spectroscopic maps}
+\subsection{\label{sec:wmaps} Water Spectroscopic maps}
+\subsubsection{gruenbaum\_2013\_tip4p}
+These maps were developed by Gruenbaum et al. in \href{https://pubs.acs.org/doi/10.1021/ct400292q}{J. Chem. Theory Comput. 9, 3109 (2013)} based on clusters
+of water molecules from a liquid-state simulation of TIP4P water. Note that some of the maps shown below have been
+developed before this paper.
+OH stretching maps:
+\begin{eqnarray}
+\omega_{10} &=& 3760.2 - 3541.7E-152677E^2 \nonumber\\
+\omega_{21} &=& 3606.0 - 3498.6E - 198715E^2 \nonumber \\
+x_{10} &=& 0.19285 - 1.7261\cdot 10^{-5} \omega_{10} \nonumber \\
+x_{21} &=& 0.26836 - 2.3788\cdot 10^{-5} \omega_{21} \nonumber \\
+p_{10} &=& 1.6466 + 5.7692\cdot 10^{-4} \omega_{10} \nonumber \\
+p_{21} &=& 2.0160 + 8.7684\cdot 10^{-4} \omega_{21} \nonumber 
+\end{eqnarray}
+OD stretching maps:
+\begin{eqnarray}
+\omega_{10} &=& 2767.8 - 2630.3E-102601E^2 \nonumber\\
+\omega_{21} &=& 2673.0 - 1763.5E - 138534E^2 \nonumber \\
+x_{10} &=& 0.16593 - 2.0632\cdot 10^{-5} \omega_{10} \nonumber \\
+x_{21} &=& 0.23167 - 2.8596\cdot 10^{-5} \omega_{21} \nonumber \\
+p_{10} &=& 2.0475 + 8.9108\cdot 10^{-4} \omega_{10} \nonumber \\
+p_{21} &=& 2.6233 + 13.1443\cdot 10^{-4} \omega_{21} \nonumber 
+\end{eqnarray}
+Dipole derivative and intramolecular coupling maps:
+\begin{eqnarray}
+\mu' &=& 0.1646 + 11.39E + 63.41E^2 \nonumber \\
+\omega_{jk}^\text{intra}&=& [-1361 + 27165(E_j + E_k)]x_jx_k - 1.887 p_j p_k \nonumber
+\end{eqnarray}
+OH/OD stretch transition dipole is located 0.67 \AA{} away from the water oxygen atom along the OH/OD bond.
+
+
+\subsubsection{li\_2010\_tip4p}
+These maps were developed by Li and Skinner in \href{https://pubs.acs.org/doi/10.1021/ct400292q}{J. Chem. Phys. 132, 244504 (2010)} based on clusters
+of water molecules from a liquid-state simulation of TIP4P water. OH stretching maps:
+\begin{eqnarray}
+\omega_{10} &=& 3732.9 - 3519.8E-1.5353\cdot 10^5E^2 \nonumber\\
+x_{10} &=& 0.19318 - 1.7248\cdot 10^{-5} \omega_{10} \nonumber \\
+p_{10} &=& 1.6120 + 5.8697\cdot 10^{-4} \omega_{10} \nonumber \\
+\end{eqnarray}
+OD stretching maps:
+\begin{eqnarray}
+\omega_{10} &=& 2748.2 - 2572.2E-1.0298\cdot 10^5 E^2 \nonumber\\
+x_{10} &=& 0.16598 - 2.0752\cdot 10^{-5} \omega_{10} \nonumber \\
+p_{10} &=& 1.9813 + 9.1419\cdot 10^{-4} \omega_{10} \nonumber \\
+\end{eqnarray}
+Dipole derivative and intramolecular coupling maps:
+\begin{eqnarray}
+\mu' &=& 0.1622 + 10.381E + 137.6E^2 \nonumber \\
+\omega_{jk}^\text{intra}&=& [-1361 + 27165(E_j + E_k)]x_jx_k - 1.887 p_j p_k \nonumber
+\end{eqnarray}
+OH/OD stretch transition dipole is located 0.67 \AA{} away from the water oxygen atom along the OH/OD bond.
+
+\subsubsection{auer\_2008\_spce}
+These maps were developed by  Auer et al. in \href{https://doi.org/10.1063/1.2925258}{J. Chem. Phys. 128, 224511 (2008)} 
+and \href{http://dx.doi.org/10.1063/1.3409561}{J. Chem. Phys. 132, 174505 (2010)} ($\omega_{21}$ and $x_{21}$ maps)
+based on clusters
+of water molecules from a liquid-state simulation of SPC/E water. OH stretching maps:
+\begin{eqnarray}
+\omega_{10} &=& 3762 - 5060E-86225 E^2\nonumber\\
+x_{10} &=& 0.1934 - 1.75\cdot 10^{-5} \omega_{10} \nonumber \\
+p_{10} &=& 1.611 + 5.893\cdot 10^{-4} \omega_{10} \nonumber \\
+\end{eqnarray}
+OD stretching maps:
+\begin{eqnarray}
+\omega_{10} &=& 2762.6 - 3640.8E-56641 E^2 \nonumber\\
+x_{10} &=& 0.16627 - 2.0884\cdot 10^{-5} \omega_{10} \nonumber \\
+p_{10} &=& 1.9844 + 9.1907\cdot 10^{-4} \omega_{10} \nonumber \\
+\omega_{21} &=& 2695.8 - 3785.1E-73074 E^2 \nonumber \\
+x_{21} &=& 0.1229 - 1.525\cdot 10^{-5} \omega_{21} \nonumber 
+\end{eqnarray}
+Dipole derivative and intramolecular couplings:
+\begin{eqnarray}
+\mu' &=& 0.1333 + 14.17E \nonumber \\
+\omega_{jk}^\text{intra}&=& [-1789 + 23852(E_j + E_k)]x_jx_k - 1.966 p_j p_k \nonumber
+\end{eqnarray}
+OH/OD stretch transition dipole is located 0.58 \AA{} away from the water oxygen atom along the OH/OD bond.
+
 
 \section{Examples}
-\begin{itemize}
 
-\item Generate input files for FTIR calculation of pure H$_2$O:
-
-
-\end{itemize}
 
  
 

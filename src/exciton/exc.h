@@ -24,7 +24,7 @@ class Exc{
 public:
    Exc(string, string, string, int, int, int, 
        double, double, double, double, double,
-       bool, bool, bool);
+       double, bool, bool, bool, bool);
   ~Exc(){};
 
    void run();
@@ -43,10 +43,14 @@ private:
    void calcSFG(int);
    void printTCF1D(string, string, vector<complex<double>>);
    void printIw1D(string, string, vector<complex<double>>, int);
+   void printSd1D(string, string, vector<double>);
    void fgrid1D();
    void printRamT();
    void printRamS();
    void scaleTDM();
+   void sdIR();
+   void sdSFG();
+   void sdRaman();
 
    vector<double> H1;
    vector<double> mu1_x;
@@ -70,6 +74,13 @@ private:
    vector<double> wgrid1d;
    vector<double> fzt;
    vector<double> fzt0;
+   vector<double> evecsr;
+   vector<double> evals;
+   vector<double> sdr_ir;
+   vector<double> sdr_sfg;
+   vector<double> sdr_vv;
+   vector<double> sdr_vh;
+   vector<double> sdr_w;
 
    vector<complex<double>> F;
    vector<complex<double>> mR1D;
@@ -97,6 +108,7 @@ private:
    int nchrom2;
    int ncor;
    int navg;
+   int nstart;
    int nsep;
    int ndim1;
    int NFFT = 4096;
@@ -105,17 +117,22 @@ private:
    double tc;
    double rlx_time;
    double sep_time;
+   double start_time;
    double w_avg;
 
    bool ir;
    bool raman;
    bool sfg;
+   bool sd;
 
    // complex constants
    const complex<double> img          = {0.,1.};
    const complex<double> complex_one  = {1.,0.};
    const complex<double> complex_zero = {0.,0.};
 
+   // real constants
+   const double done  = 1.0;
+   const double dzero = 0.0;
 
    ifstream hinfile;
    ifstream dinfile;

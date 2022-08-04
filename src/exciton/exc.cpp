@@ -3,18 +3,19 @@
 using namespace std;
 
 Exc::Exc(string h_file_name, string d_file_name, string p_file_name, int nchr, int nt, 
-         int nv, double deltaT, double corrT, double trel, double tsep, double wav, 
-         bool irs, bool ramans, bool sfgs):
+         int nv, double deltaT, double corrT, double trel, double tsep, double ts,
+         double wav, bool irs, bool ramans, bool sfgs, bool inh):
          Hfile(h_file_name), Dfile(d_file_name), Pfile(p_file_name), nchrom(nchr), 
          ntime(nt), navg(nv), dt(deltaT), tc(corrT), rlx_time(trel), sep_time(tsep), 
-         w_avg(wav), ir(irs), raman(ramans), sfg(sfgs)
+         start_time(ts), w_avg(wav), ir(irs), raman(ramans), sfg(sfgs), sd(inh)
 {
    // setting up some variables 
    int nfrmn = 0;
    if (ir || raman || sfg){
       ncor = (int) (tc/dt);
       nsep = (int) (sep_time/dt); 
-      nfrmn = navg*ncor+nsep*(navg-1);
+      nstart = (int) (start_time/dt);
+      nfrmn = nstart+navg*ncor+nsep*(navg-1);
 
       if(nfrmn > ntime){
         printf("\n Error! The input trajectory is too short, need %d more frames.\n\n",(nfrmn-ntime));
@@ -25,9 +26,10 @@ Exc::Exc(string h_file_name, string d_file_name, string p_file_name, int nchr, i
    printf("\n** Setting up calculation: **\n");
    printf("   Time step: %7.5f [ps] Correlation time: %7.5f [ps] \n", dt, tc);
    printf("   Statistical averaging will be performed using %d slices \n",navg);
+   printf("   Starting time : %7.5f [ps] \n",start_time);
    printf("   Slices will be separated by %7.5f [ps] \n",sep_time);
-   printf("   Input number of frames: %d \n",ntime);
    printf("   %d frames are needed to calculate spectra \n",nfrmn);
+   printf("   Input number of frames: %d \n",ntime);
 
 }
 
@@ -39,6 +41,8 @@ void Exc::run()
 
    F.resize(nchrom2);
    H1.resize(nchrom2);
+   evecsr.resize(nchrom2);
+   evals.resize(nchrom);
 
    // run jobs...
    if(ir) FTIR();
@@ -133,7 +137,18 @@ void Exc::SFG()
    spsw.resize(NFFT);
    fill_n(spsw.begin(), NFFT, complex_zero);
 
+   fgrid1D();
+
+   // Inhomogeneously broadened SFG spectra
+   sdr_sfg.resize(NFFT-1,0.0);
+   // frequency distribution
+   sdr_w.resize(NFFT-1,0.0);
+
    printf("\n** Calculating ssp, ppp SFG TCFs **\n");
+   readHf(nstart);
+   readPf(nstart,false);
+   readDf(nstart,false);
+   readFzf(nstart,false);
    for(int ii=0; ii<navg; ++ii){
       fill_n(F.begin(), nchrom2, complex_zero);
       for(int jj=0; jj<nchrom;++jj)  F[jj*nchrom+jj] = complex_one;
@@ -150,6 +165,7 @@ void Exc::SFG()
          readFzf(1,false);
          moveF();
          calcSFG(tt);
+         if(sd) sdSFG();
       }
       readHf(nsep);
       readPf(nsep,false);
@@ -157,7 +173,6 @@ void Exc::SFG()
       readFzf(nsep,false);
    }
 
-   fgrid1D();
 
    FFT1D(sspt, sspw, dt, NFFT);
    FFT1D(pppt, pppw, dt, NFFT);
@@ -173,6 +188,11 @@ void Exc::SFG()
    printIw1D("pppw.dat", "PPP", pppw, 2);
    printIw1D("yyzw.dat", "yyz", yyzw, 2);
    printIw1D("spsw.dat", "SPS", spsw, 2);
+
+   if(sd){
+      printSd1D("yyzwi.dat", "SFG yyz inhomogeneous limit",sdr_sfg);
+      printSd1D("pw.dat", "frequency distribution", sdr_w);
+   }
 
    // close files:
    dinfile.close();
@@ -229,7 +249,20 @@ void Exc::Raman()
    VHw.resize(NFFT);
    fill_n(VHw.begin(), NFFT, complex_zero);
 
+   fgrid1D();
+
+   // Inhomogeneously broadened spectra
+   sdr_vv.resize(NFFT-1,0.0);
+   sdr_vh.resize(NFFT-1,0.0);
+   // Frequency distribution
+   sdr_w.resize(NFFT-1,0.0);
+
    printf("\n** Calculating VV and VH Raman TCFs **\n");
+   if(sd)
+      printf("   and VV and VH spectra in the inhomogeneous broadening limit.\n");
+
+   readHf(nstart);
+   readPf(nstart,false);
    for(int ii=0; ii<navg; ++ii){
       fill_n(F.begin(), nchrom2, complex_zero);
       for(int jj=0; jj<nchrom;++jj)  F[jj*nchrom+jj] = complex_one;
@@ -240,13 +273,12 @@ void Exc::Raman()
          readHf(1);
          readPf(1,false);
          moveF();
+         if(sd) sdRaman();
          calcRm(tt);
       }
       readHf(nsep);
       readPf(nsep,false);
    }
-
-   fgrid1D();
 
    // FFT to get spectra
    FFT1D(VVT, VVw, dt, NFFT);
@@ -266,6 +298,12 @@ void Exc::Raman()
    printRamS();
    printIw1D("vvw.dat", "VV", VVw, 1);
    printIw1D("vhw.dat", "VH", VHw, 1);
+
+   if(sd){
+      printSd1D("vvwi.dat", "Raman VV inhomogeneous limit",sdr_vv);
+      printSd1D("vhwi.dat", "Raman VH inhomogeneous limit",sdr_vh);
+      printSd1D("pw.dat", "frequency distribution", sdr_w);
+   }
 
    // close files:
    pinfile.close();
@@ -311,7 +349,19 @@ void Exc::FTIR()
    IRw.resize(NFFT);
    fill_n(IRw.begin(), NFFT, complex_zero);
 
+   fgrid1D();
+
+   // Inhomogeneously broadened spectra
+   sdr_ir.resize(NFFT-1);
+   fill_n(sdr_ir.begin(), NFFT-1, 0.0);
+
+   // Frequency distribution
+   sdr_w.resize(NFFT-1,0.0);
+
    printf("\n** Calculating dipole-dipole TCF **\n"); 
+
+   readHf(nstart);
+   readDf(nstart,false);
    for(int ii=0; ii<navg; ++ii){
       fill_n(F.begin(), nchrom2, complex_zero);
       for(int jj=0; jj<nchrom;++jj)  F[jj*nchrom+jj] = complex_one;
@@ -323,18 +373,22 @@ void Exc::FTIR()
          readDf(1,false);
          moveF();
          calcR1D(tt);   
+         if(sd) sdIR();
       }
       readHf(nsep);
       readDf(nsep,false);
    }
 
-   fgrid1D();
 
    FFT1D(mR1D, IRw, dt, NFFT);
 
    printTCF1D("irt.dat", "IR", mR1D);
-
    printIw1D("irw.dat", "IR", IRw, 1);
+
+   if(sd){
+      printSd1D("irwi.dat", "IR inhomogeneous limit",sdr_ir);
+      printSd1D("pw.dat", "frequency distribution", sdr_w);
+   }
 
    // close files:
    dinfile.close();
@@ -415,10 +469,15 @@ void Exc::moveF()
    vector<complex<double>> work(nchrom2, complex_zero);
    vector<complex<double>> eiH(nchrom2, complex_zero); 
 
+   //fill_n(evecsr.begin(), nchrom2, 0.0);
+   //fill_n(evals.begin(), nchrom, 0.0);
+
    for (int i=0; i<nchrom; i++ ){
+      evals[i] = W[i];
       for (int j=0; j<nchrom; j++){
          evec[i*nchrom+j].real(Ht[i*nchrom+j]);
          evec[i*nchrom+j].imag(0.0);
+         evecsr[i*nchrom+j] = Ht[i*nchrom+j];
       }
    }
    
@@ -858,7 +917,8 @@ void Exc::calcSFG(int ti)
   yyzt[ti] += cyyz*exptc;
 
   // polarizations
-  // 1. xxz = yyz here we actually double statistics by taking the average
+  // 1. xxz = yyz here we actually double the statistics by taking the average
+  // of what should be identical elements of transition polarizability 
   sspt[ti] += 0.5*(cxxz+cyyz)*exptc;
   spst[ti] += 0.5*(cyzy+cxzx)*exptc;
   pppt[ti] += (-0.5*cxxz-0.5*cyyz+czzz)*exptc;
@@ -892,3 +952,208 @@ void Exc::scaleTDM()
    for(int ii=0; ii<nchrom; ++ii)
       mu1_z0[ii] *= fzt0[ii];   
 }
+
+void Exc::sdIR()
+{
+//
+// Calculate IR spectra in the
+// inhomogeneous broadening limit
+//
+  MKL_INT lda;
+  lda = (MKL_INT) nchrom;
+
+  vector<double> muX(nchrom);
+  vector<double> muY(nchrom);
+  vector<double> muZ(nchrom);
+  vector<double> muXt(nchrom);
+  vector<double> muYt(nchrom);
+  vector<double> muZt(nchrom);
+
+  double mu2, ew;
+
+  // x
+  for(int ii=0; ii<nchrom; ++ii) muX[ii] = mu1_x[ii];
+
+  cblas_dgemv(CblasRowMajor, CblasTrans, lda, lda, done,
+              &evecsr[0], lda, &muX[0], 1, dzero, &muXt[0], 1);
+  
+  // y
+  for(int ii=0; ii<nchrom; ++ii) muY[ii] = mu1_y[ii];
+
+  cblas_dgemv(CblasRowMajor, CblasTrans, lda, lda, done,
+              &evecsr[0], lda, &muY[0], 1, dzero, &muYt[0], 1);
+
+  // z
+  for(int ii=0; ii<nchrom; ++ii) muZ[ii] = mu1_z[ii];
+
+  cblas_dgemv(CblasRowMajor, CblasTrans, lda, lda, done,
+              &evecsr[0], lda, &muZ[0], 1, dzero, &muZt[0], 1);
+
+  for(int ii=0; ii<nchrom; ++ii){
+     mu2 = muXt[ii]*muXt[ii] + muYt[ii]*muYt[ii] + muZt[ii]*muZt[ii];
+     ew = evals[ii] + w_avg;     
+
+     for(int jj=0; jj<(NFFT-1); ++jj)
+        if((ew > wgrid1d[jj]) && (ew < wgrid1d[jj+1])){
+           sdr_ir[jj]   += mu2; 
+           sdr_w[jj] += 1.0;
+        }
+  }
+
+}
+
+void Exc::sdSFG()
+{
+//
+// Calculate SFG yyz spectra in the inhomogeneous broadening limit
+//
+   MKL_INT lda;
+   lda = (MKL_INT) nchrom;
+
+   vector<double> aYY(nchrom);
+   vector<double> mZ(nchrom);
+   vector<double> aYYt(nchrom);
+   vector<double> mZt(nchrom);
+
+   double ma, ew;
+
+   for(int ii=0; ii<nchrom; ++ii) aYY[ii] = plz_yy[ii];
+   for(int ii=0; ii<nchrom; ++ii) mZ[ii] = mu1_z[ii];
+
+   cblas_dgemv(CblasRowMajor, CblasTrans, lda, lda, done,
+               &evecsr[0], lda, &aYY[0], 1, dzero, &aYYt[0], 1);
+
+   cblas_dgemv(CblasRowMajor, CblasTrans, lda, lda, done,
+               &evecsr[0], lda, &mZ[0], 1, dzero, &mZt[0], 1);
+
+   for(int ii=0; ii<nchrom; ++ii){
+      ma = mZt[ii]*aYYt[ii];
+      ew = evals[ii] + w_avg;
+
+      for(int jj=0; jj<(NFFT-1); ++jj)
+         if((ew > wgrid1d[jj]) && (ew < wgrid1d[jj+1])){
+            sdr_sfg[jj] += ma;
+            sdr_w[jj] += 1.0;
+         }
+   }
+
+}
+
+void Exc::sdRaman()
+{
+//
+// Calculate Raman VV and VH spectra in the inhomogeneous limit
+//
+   MKL_INT lda;
+   lda = (MKL_INT) nchrom;
+
+   vector<double> aXX(nchrom);
+   vector<double> aXY(nchrom);
+   vector<double> aXZ(nchrom);
+   vector<double> aYY(nchrom);
+   vector<double> aYZ(nchrom);
+   vector<double> aZZ(nchrom);
+
+   vector<double> aXXt(nchrom);
+   vector<double> aXYt(nchrom);
+   vector<double> aXZt(nchrom);
+   vector<double> aYYt(nchrom);
+   vector<double> aYZt(nchrom);
+   vector<double> aZZt(nchrom);
+ 
+   // xx
+   for(int ii=0; ii<nchrom; ++ii) aXX[ii] = plz_xx[ii];
+
+   cblas_dgemv(CblasRowMajor, CblasTrans, lda, lda, done,
+               &evecsr[0], lda, &aXX[0], 1, dzero, &aXXt[0], 1);
+
+    // yy
+   for(int ii=0; ii<nchrom; ++ii) aYY[ii] = plz_yy[ii];
+
+   cblas_dgemv(CblasRowMajor, CblasTrans, lda, lda, done,
+               &evecsr[0], lda, &aYY[0], 1, dzero, &aYYt[0], 1);
+
+   // zz
+   for(int ii=0; ii<nchrom; ++ii) aZZ[ii] = plz_zz[ii];
+
+   cblas_dgemv(CblasRowMajor, CblasTrans, lda, lda, done,
+               &evecsr[0], lda, &aZZ[0], 1, dzero, &aZZt[0], 1);
+
+   // xy
+   for(int ii=0; ii<nchrom; ++ii) aXY[ii] = plz_xy[ii];
+
+   cblas_dgemv(CblasRowMajor, CblasTrans, lda, lda, done,
+               &evecsr[0], lda, &aXY[0], 1, dzero, &aXYt[0], 1);
+
+   // xz
+   for(int ii=0; ii<nchrom; ++ii) aXZ[ii] = plz_xz[ii];
+
+   cblas_dgemv(CblasRowMajor, CblasTrans, lda, lda, done,
+               &evecsr[0], lda, &aXZ[0], 1, dzero, &aXZt[0], 1);
+
+   // yz
+   for(int ii=0; ii<nchrom; ++ii) aYZ[ii] = plz_yz[ii];
+ 
+   cblas_dgemv(CblasRowMajor, CblasTrans, lda, lda, done,
+               &evecsr[0], lda, &aYZ[0], 1, dzero, &aYZt[0], 1);
+
+
+   double xxxx, yyyy, zzzz, xxyy, yyzz, xxzz, yyxx, zzyy, zzxx, xyxy, xzxz, yzyz;
+   double iiii, iijj, ijij, vv, vh, ew;
+
+   for(int i=0; i<nchrom; ++i){
+      xxxx = aXXt[i]*aXXt[i];
+      yyyy = aYYt[i]*aYYt[i];
+      zzzz = aZZt[i]*aZZt[i];
+      xxyy = aXXt[i]*aYYt[i];
+      yyzz = aYYt[i]*aZZt[i];
+      xxzz = aXXt[i]*aZZt[i];
+      yyxx = aYYt[i]*aXXt[i];
+      zzyy = aZZt[i]*aYYt[i];
+      zzxx = aZZt[i]*aXXt[i];
+      xyxy = aXYt[i]*aXYt[i];
+      xzxz = aXZt[i]*aXZt[i];
+      yzyz = aYZt[i]*aYZt[i];
+
+      iiii = xxxx + yyyy + zzzz;
+      iijj = xxyy + yyzz + xxzz + yyxx + zzyy + zzxx;
+      ijij = xyxy + xzxz + yzyz;
+
+      vv = (3.0*iiii + iijj + 4.0*ijij)/15.0;
+      vh = (2.0*iiii - iijj + 6.0*ijij)/30.0;
+
+      ew = evals[i] + w_avg;
+
+      for(int jj=0; jj<(NFFT-1); ++jj)
+         if((ew > wgrid1d[jj]) && (ew < wgrid1d[jj+1]))
+         {
+            sdr_vv[jj] += vv;
+            sdr_vh[jj] += vh;
+            sdr_w[jj]  += 1.0;
+         }
+   }
+
+}
+
+void Exc::printSd1D(string specf, string stype, vector<double> Iw)
+{
+   ofstream o_iw_file;
+   o_iw_file.open(specf);
+   if(!o_iw_file.is_open()){
+      printf(" Error! Cannot open file: %s \n",specf.c_str());
+      exit(EXIT_FAILURE);
+   }
+
+   double norm = 0.0;
+   for(unsigned int j=0; j<Iw.size(); j++)
+      norm += Iw[j];
+
+   printf("   Writing %s Spectra into %s \n",stype.c_str(),specf.c_str());
+   for(unsigned int j=0; j<(wgrid1d.size()-1); j++){
+      o_iw_file << (wgrid1d[j]+wgrid1d[j+1])/2.0 << "  " << Iw[j]/norm << endl;
+   }
+
+   o_iw_file.close();
+
+}
+

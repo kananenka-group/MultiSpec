@@ -5,7 +5,7 @@ water::water(string wm_name, string wS_wmap_name, string wB_map_name,
              string atoms_file_name, int nfr, int d2o,  bool doir, 
              bool doraman, bool dosfg, bool doDoDov, bool intrac, 
              bool intermc_OHs, float trdip_for_SFG, float fermi_c) : 
-             water_model_name(wm_name), jobType(job_type), 
+             water_model_name_inp(wm_name), jobType(job_type), 
              traj_file(traj_file_name), gro_file(gro_file_name), 
              ams_file(atoms_file_name), wms(wS_wmap_name, job_type, intrac), 
              wmb(wB_map_name, job_type), nframes(nfr), nd2o(d2o), 
@@ -72,11 +72,11 @@ water::water(string wm_name, string wS_wmap_name, string wB_map_name,
    int counter=0;
 
    if(ws || wf){
-   //////////////////////////////////////////////////////////////////////////////////////
-   //
-   // Case 1. Stretch fundamental (and bend overtone).
-   //
-   //////////////////////////////////////////////////////////////////////////////////////
+   /////////////////////////////////////////////////////////////////////////////
+   //                                                                         //
+   // Case 1. Stretch fundamental (and bend overtone)                         //
+   //                                                                         //
+   /////////////////////////////////////////////////////////////////////////////
       while(traj.next()==0 && counter<nframes) {
          x = traj.getCoords();
          traj.getBox(box);
@@ -94,17 +94,12 @@ water::water(string wm_name, string wS_wmap_name, string wB_map_name,
          counter++;
       }
    }
-   //////////////////////////////////////////////////////////////////////////////////////
-   //
-   // Case 2. Isolated OH stretching vibration, HOD/D2O, HOD/H2O infinite dilute limit, etc.
-   //
-   //////////////////////////////////////////////////////////////////////////////////////
+   /////////////////////////////////////////////////////////////////////////////
+   //                                                                         //
+   // Case 2.                                                                 //
+   //                                                                         //
+   /////////////////////////////////////////////////////////////////////////////
 
-   //////////////////////////////////////////////////////////////////////////////////////
-   //
-   // Case 3. Coupled bending vibration
-   //
-   //////////////////////////////////////////////////////////////////////////////////////
 
    // calc. frequency distributions
    freqDist();
@@ -148,8 +143,11 @@ void water::waterModel()
 {
    printf("\n** Reading water model **\n");
 
+   // transform water model name to upper case
+   water_model_name = str_toupper(water_model_name_inp);
+
    // check water model
-   if(water_model_name=="TIP4P" || water_model_name=="tip4p" || water_model_name=="E3B2" || water_model_name=="e3b2"){
+   if(water_model_name=="TIP4P" || water_model_name=="E3B2"){
       printf("   Water model : TIP4P [ W. L. Jorgensen et al., J. Chem. Phys. 79, 926-935 (1983) ]\n");
       if(atoms_in_mol!=4){
          printf(" Error ! Water model indicated is (TIP4P or E3B2) is inconsistent with *.gro file.\n");
@@ -161,8 +159,11 @@ void water::waterModel()
       if(tdSFG<0)
          tdSFG = trdip;
       trdip *= A0;
-   }else if(water_model_name=="E3B3" || water_model_name=="e3b3"){
-      printf("   Water model : E3B3 is based on TIP4P/2005 [ Abascal et al. J. Chem. Phys. 123, 234505 (2005) ]\n");
+   }else if(water_model_name=="E3B3" || water_model_name=="TIP4P/2005"){
+      if (water_model_name=="E3B3")
+         printf("   Water model : E3B3 is based on TIP4P/2005 [ Abascal et al. J. Chem. Phys. 123, 234505 (2005) ]\n");
+      if (water_model_name=="TIP4P/2005")
+         printf("   Water model : TIP4P/2005 [ Abascal et al. J. Chem. Phys. 123, 234505 (2005) ]\n");
       if(atoms_in_mol!=4){
          printf(" Error ! Water model indicated is (TIP4P/2005 or E3B3) is inconsistent with *.gro file.\n");
          exit(EXIT_FAILURE);
@@ -174,10 +175,10 @@ void water::waterModel()
       if(tdSFG<0)
          tdSFG = trdip;
       trdip *= A0;
-   }else if(water_model_name=="SPC/E" || water_model_name=="spc/e" || water_model_name=="SPC" || water_model_name=="spc"){
-      printf("   Water model : SPC/E [ Berendsen et al. J. Phys. Chem. 91, 6269 (1987) ]\n");
+   }else if(water_model_name=="SPCE" || water_model_name=="SPC/E" || water_model_name=="SPC"){
+      printf("   Water model : SPCE [ Berendsen et al. J. Phys. Chem. 91, 6269 (1987) ]\n");
       if(atoms_in_mol!=3){
-         printf(" Error ! Water model indicated is (SPC or SPC/E) is inconsistent with *.gro file.\n");
+         printf(" Error ! Water model indicated is (SPC or SPCE) is inconsistent with *.gro file.\n");
          exit(EXIT_FAILURE);
       }
       moveM = false;
@@ -187,7 +188,7 @@ void water::waterModel()
       trdip *= A0;
    }else{
       printf(" Error: %s water model is not recognized ! ",water_model_name.c_str()); 
-      printf("        Supported water models are: SPC, SPC/E, TIP4P, TIP4P/2005, E3B2, E3B3.\n");
+      printf("        Supported water models are: SPC, SPCE, TIP4P, TIP4P/2005, E3B2, E3B3.\n");
       exit(EXIT_FAILURE);
    }
    
@@ -672,8 +673,6 @@ void water::calcWXPM()
    }
 
 
-   
-
 }
 
 void water::intermC(){
@@ -921,6 +920,9 @@ void water::freqDist()
    unsigned int size = omegas.size();
    nbins = sturges(size); //1 + (int) log2(size); //(int) sqrt(size);
    w_dist.resize(nbins,0);
+
+   if(!DoDv)
+      omegas.erase(remove(begin(omegas), end(omegas), 0.0), end(omegas));
 
    auto min_f = min_element(omegas.begin(), omegas.end());
    auto max_f = max_element(omegas.begin(), omegas.end());

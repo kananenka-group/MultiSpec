@@ -14,14 +14,22 @@ extern "C" { // Declare as extern "C" if used from C++
 // wc  = [ wij0 +  wije*(Ei + Ej) ]xi*xj + wijpp*pi*pj
 typedef struct _eFmapS
 {
-   float w0_OH, w1_OH, w2_OH;
-   float x0_OH, x1_OH, x2_OH;
-   float p0_OH, p1_OH, p2_OH;
-   float m0_OH, m1_OH, m2_OH;
-   float w0_OD, w1_OD, w2_OD;
-   float x0_OD, x1_OD, x2_OD;
-   float p0_OD, p1_OD, p2_OD;
-   float m0_OD, m1_OD, m2_OD;
+   float w10_OH_0, w10_OH_1, w10_OH_2;
+   float x10_OH_0, x10_OH_1, x10_OH_2;
+   float p10_OH_0, p10_OH_1, p10_OH_2;
+   float m10_OH_0, m10_OH_1, m10_OH_2;
+   float w10_OD_0, w10_OD_1, w10_OD_2;
+   float x10_OD_0, x10_OD_1, x10_OD_2;
+   float p10_OD_0, p10_OD_1, p10_OD_2;
+   float m10_OD_0, m10_OD_1, m10_OD_2;
+   float w21_OH_0, w21_OH_1, w21_OH_2;
+   float x21_OH_0, x21_OH_1, x21_OH_2;
+   float p21_OH_0, p21_OH_1, p21_OH_2;
+   float m21_OH_0, m21_OH_1, m21_OH_2;
+   float w21_OD_0, w21_OD_1, w21_OD_2;
+   float x21_OD_0, x21_OD_1, x21_OD_2;
+   float p21_OD_0, p21_OD_1, p21_OD_2;
+   float m21_OD_0, m21_OD_1, m21_OD_2;
    float wij0, wije, wijpp;
 } eFmapS;
 

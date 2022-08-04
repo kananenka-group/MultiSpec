@@ -60,3 +60,6 @@ build/
 #version dir
 1.0/
 1.1/
+
+#input files
+*.inp

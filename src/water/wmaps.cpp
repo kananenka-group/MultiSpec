@@ -9,6 +9,7 @@ WmapS::WmapS(string map_name, string chrom_type, bool intramolOHc) :
 
    if(map_name=="li_2010_tip4p"){
       printf("   Using hydroxyl stretch map from : F. Li and J. L. Skinner, J. Chem. Phys. 132, 244504 (2010)\n");
+      printf("   Note! This map can only describe 0->1 transitions.\n");
       emap = {3732.90, -3519.8, -153520.0, 
               0.19318, -1.7248e-5, 0.0, 
               1.6102, 5.8697e-4, 0.0, 
@@ -17,18 +18,53 @@ WmapS::WmapS(string map_name, string chrom_type, bool intramolOHc) :
               0.16598, -2.0752e-5, 0.0,
               1.9813, 9.1419e-4, 0.0,
               0.1622, 10.381, 137.6,
+              0.0, 0.0, 0.0,
+              0.0, 0.0, 0.0,
+              0.0, 0.0, 0.0,
+              0.0, 0.0, 0.0,
+              0.0, 0.0, 0.0,
+              0.0, 0.0, 0.0,
+              0.0, 0.0, 0.0,
+              0.0, 0.0, 0.0,
              -1361.0, 27165.0, -1.887};
    }else if(map_name=="gruenbaum_2013_tip4p"){
       printf("   Using hydroxyl stretch map from : S. M. Gruenbaum et al., J. Chem. Theory Comput. 9, 3109 (2013)\n");
-      emap = {3760.2,  -3541.7, -152677.0,
-              0.19285, -1.7261e-5, 0.0,
-              1.6466,   5.7692e-4, 0.0,
-              0.1646,  11.39, 63.41,
-              2767.8, -2630.3, -102601.0,
-              0.16593, -2.0632e-5, 0.0,
-              2.0475, 8.9108e-4, 0.0,
-              0.1646,  11.39, 63.41,
-             -1361.0, 27165.0, -1.887}; 
+      emap = {3760.2,  -3541.7,     -152677.0,
+              0.19285, -1.7261e-5,   0.0,
+              1.6466,   5.7692e-4,   0.0,
+              0.1646,   11.39,       63.41,
+              2767.8,  -2630.3,     -102601.0,
+              0.16593, -2.0632e-5,   0.0,
+              2.0475,   8.9108e-4,   0.0,
+              0.1646,   11.39,       63.41,
+              3606.0,  -3498.6,     -198715.0,
+              0.26836, -2.3788e-5,   0.0,
+              2.0160,   8.7684e-4,   0.0,
+              0.1646,   11.39,       63.41,
+              2673.0,  -1763.5,     -138534.0,
+              0.23167, -2.8596e-5,   0.0,
+              2.6233,   13.1443e-4,  0.0,
+              0.1646,   11.39,       63.41,
+             -1361.0,   27165.0,    -1.887}; 
+   }else if(map_name=="auer_2008_spce"){
+      printf("   Using hydroxyl stretch map from : B. M. Auer et al., J. Chem. Phys. 128, 224511 (2008)\n");
+      emap = {3762.0,  -5060.0,    -86225.0,
+              0.1934,  -1.75e-5,    0.0,
+              1.611,    5.893e-4,   0.0,
+              0.1333,   14.17,      0.0,
+              2762.6,  -3640.8,    -56641.0,
+              0.16627, -2.0884e-5,  0.0,
+              1.9844,   9.1907e-4,  0.0,
+              0.1333,   14.17,      0.0,
+              3614.1,  -5493.7,    -115670.0,
+              0.1428,  -1.29e-5,    0.0,
+              0.0,      0.0,        0.0,
+              0.1333,   14.17,      0.0,
+              2695.8,  -3785.1,    -73074.0,
+              0.1229,  -1.525e-5,   0.0,
+              0.0,      0.0,        0.0,
+              0.1333,   14.17,      0.0,
+             -1789.0,   23852.0,   -1.966}; 
    }else{
       printf(" Error! Cannot recognize the map! %s \n",map_name.c_str());
       exit(EXIT_FAILURE);
@@ -80,28 +116,28 @@ float WmapS::getp01E(float E){
 }
 
 float WmapS::getw01E_OH(float E)
-{ return emap.w0_OH + emap.w1_OH*E + emap.w2_OH*E*E; }
+{ return emap.w10_OH_0 + emap.w10_OH_1*E + emap.w10_OH_2*E*E; }
 
 float WmapS::getw01E_OD(const float E)
-{ return emap.w0_OD + emap.w1_OD*E + emap.w2_OD*E*E; }
+{ return emap.w10_OD_0 + emap.w10_OD_1*E + emap.w10_OD_2*E*E; }
 
 float WmapS::getm01E_OH(const float E)
-{ return emap.m0_OH + emap.m1_OH*E + emap.m2_OH*E*E; }
+{ return emap.m10_OH_0 + emap.m10_OH_1*E + emap.m10_OH_2*E*E; }
 
 float WmapS::getm01E_OD(const float E)
-{ return emap.m0_OD + emap.m1_OD*E + emap.m2_OD*E*E; }
+{ return emap.m10_OD_0 + emap.m10_OD_1*E + emap.m10_OD_2*E*E; }
 
 float WmapS::getp01E_OH(const float w)
-{ return emap.p0_OH + emap.p1_OH*w; }
+{ return emap.p10_OH_0 + emap.p10_OH_1*w; }
 
 float WmapS::getp01E_OD(const float w)
-{ return emap.p0_OD + emap.p1_OD*w; }
+{ return emap.p10_OD_0 + emap.p10_OD_1*w; }
 
 float WmapS::getx01E_OH(const float w)
-{ return emap.x0_OH + emap.x1_OH*w; }
+{ return emap.x10_OH_0 + emap.x10_OH_1*w; }
 
 float WmapS::getx01E_OD(const float w)
-{ return emap.x0_OD + emap.x1_OD*w; }
+{ return emap.x10_OD_0 + emap.x10_OD_1*w; }
 
 float WmapS::getcnn(const float Ei, const float Ej)
 {

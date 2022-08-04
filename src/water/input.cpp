@@ -50,5 +50,31 @@ Input::Input(int argc, char ** argv){
         exit(EXIT_FAILURE);
     }
 
+    // print input parameters
+    inpfile.open("water.inp");
+    inpfile << "# Input parameters of water module " << endl;
+    inpfile << "          xtc = " << xtc_file << endl;
+    inpfile << "  stretch_map = " << stretch_map_name << endl;
+    inpfile << "     bend_map = " << bend_map_name << endl;
+    inpfile << "  water_model = " << water_model << endl;
+    inpfile << "           IR = " << ir << endl;
+    inpfile << "        Raman = " << raman << endl;
+    inpfile << "          SFG = " << sfg << endl;
+    inpfile << "      nframes = " << nframes << endl;
+    inpfile << "    spec_type = " << job_type << endl;
+    inpfile << "     gro_file = " << gro_file << endl;
+    inpfile << "   atoms_file = " << ams_file << endl;
+    inpfile << "          D2O = " << nd2o << endl;
+    inpfile << " DOD_overtone = " << dodov << endl;
+    inpfile << "           Fc = " << fc << endl;
+    if(trdipSFG>-10){
+       inpfile << "     trdipSFG = " << trdipSFG << endl;
+    }else{
+       inpfile << "     trdipSFG = " << " not set " << endl;
+    }
+    inpfile << "       intrac = " << intrac << endl;
+    inpfile << "     intercOH = " << intercs << endl;
+    inpfile.close();
+
 }
 

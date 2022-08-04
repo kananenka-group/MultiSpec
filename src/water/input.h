@@ -57,6 +57,8 @@ private:
   string gro_file    = "confout.gro";
   string ams_file    = "atoms.txt";
 
+  ofstream inpfile;
+
 };
 
 #endif

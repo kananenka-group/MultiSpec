@@ -5,7 +5,7 @@
 #include <sstream>
 #include <string>
 #include <random>
-#include <algorithm>
+#include <algorithm> // for transform
 #include <iterator> // begin, end, ostream_iterator
 #include <numeric>  // iota
 #include "wmaps.h"
@@ -27,7 +27,7 @@ public:
   ~water();
 
 private:
-  string water_model_name;
+  string water_model_name, water_model_name_inp;
   string jobType;
   string traj_file;
   string gro_file;
@@ -102,7 +102,6 @@ private:
   bool uncs = false;
   bool moveM=false;
 
-
   float total_charge;
   float total_mass;
   float inv_total_mass;
@@ -120,6 +119,7 @@ private:
   ofstream jobfile;
   ofstream fzoutfile;
   ofstream isofile;
+  ofstream inpfile;
 
   vector<string> uAtoms;
   vector<string> aAtoms;

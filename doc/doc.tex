@@ -55,7 +55,9 @@ Exciton module is the main module that computes spectra. Currently only linear I
 \item \textbf{navg}: (\texttt{int}) the number of segments the input trajectories will be divided into and used for statistical averaging.
 \item \textbf{tstart}: (\texttt{double}) Starting time for calculating spectra (ps). Rewind the trajectory to this time and start calculating spectra. 
 \item \textbf{tsep}: (\texttt{double}) time separation in ps between segments.
-\item \textbf{w\_avg}: (\texttt{double}) average frequency (optional) helps mitigate numerical instabilities.
+\item \textbf{w\_avg}: (\texttt{double}) (optional parameter) average frequency  in cm$^{-1}$. It helps mitigate numerical instabilities.
+\item \textbf{inh}: (\texttt{bool}) calculate spectra in the inhomogeneous broadening limit. This also requests
+calculation of distribution of excitonic frequencies.
 
 \end{itemize}
 
@@ -200,6 +202,7 @@ Dipole derivative and intramolecular couplings:
 \omega_{jk}^\text{intra}&=& [-1789 + 23852(E_j + E_k)]x_jx_k - 1.966 p_j p_k \nonumber
 \end{eqnarray}
 OH/OD stretch transition dipole is located 0.58 \AA{} away from the water oxygen atom along the OH/OD bond.
+
 
 
 \section{Examples}

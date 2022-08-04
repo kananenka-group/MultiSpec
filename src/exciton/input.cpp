@@ -15,6 +15,7 @@ Input::Input(int argc, char ** argv){
        ("help", "help message")
        ("dt",     po::value<double>(&dt),              "Time step [ps]")
        ("tc",     po::value<double>(&tc),              "Propagation time [ps]")
+       ("tstart", po::value<double>(&ts),              "Starting time [ps]")   
        ("tsep",   po::value<double>(&tsep),            "Separation time [ps]")
        ("T1",     po::value<double>(&trlx),            "Relaxation time [ps]")
        ("w_avg",  po::value<double>(&w_avg),           "Average frequency [cm-1]")
@@ -26,6 +27,7 @@ Input::Input(int argc, char ** argv){
        ("IR",     po::value<bool>(&ir),                "Calculate linear IR spectrum")
        ("Raman",  po::value<bool>(&raman),             "Calculate Raman spectrum") 
        ("SFG",    po::value<bool>(&sfg),               "Calculate SFG spectrum")
+       ("inh",    po::value<bool>(&sd),                "Inhomogeneous limit")
        ;
 
        po::variables_map vm;
@@ -66,6 +68,26 @@ Input::Input(int argc, char ** argv){
 
    // print:
    printf("   Number of chromophores: %d \n",nchrom);
+
+   // print all parameters
+   inpfile.open("exciton.inp");
+   inpfile << "# Input parameters of exciton module " << endl;
+   inpfile << "      dt = " <<  dt << endl;
+   inpfile << "      tc = " <<  tc << endl;
+   inpfile << "  tstart = " <<  ts << endl;
+   inpfile << "    tsep = " <<  tsep << endl;
+   inpfile << "      T1 = " <<  trlx << endl;
+   inpfile << "   w_avg = " <<  w_avg << endl;
+   inpfile << "       H = " <<  Hfile << endl;
+   inpfile << "       D = " <<  Dfile << endl;
+   inpfile << "       P = " <<  Pfile << endl;
+   inpfile << " nframes = " <<  nframe << endl;
+   inpfile << "    navg = " <<  navg << endl;
+   inpfile << "      IR = " <<  ir << endl;
+   inpfile << "   Raman = " <<  raman << endl;
+   inpfile << "     SFG = " <<  sfg << endl;
+   inpfile << "     inh = " <<  sd << endl;
+   inpfile.close();
 
 }
 

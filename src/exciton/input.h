@@ -21,6 +21,7 @@ public:
 
   double getdt()   const { return dt; }
   double gettc()   const { return tc; }
+  double getts()   const { return ts; }
   double getTrlx() const { return trlx; }
   double getTsep() const { return tsep; }
   double getWavg() const { return w_avg; }
@@ -28,6 +29,7 @@ public:
   bool ifIR()     const { return ir; }
   bool ifRaman()  const { return raman; }
   bool ifSFG()    const { return sfg; }
+  bool ifSD()     const { return sd; }
 
   string getHfile() const { return Hfile; }
   string getDfile() const { return Dfile; }
@@ -44,10 +46,12 @@ private:
   double trlx = 0.2;
   double tsep = 2.0; // separation time in ps
   double w_avg = 0.0;
+  double ts = 0.0;
 
   bool ir = false;     // calc IR spectra
   bool raman = false;  // calc Raman spectra
   bool sfg = false;    // calc SFG spectra
+  bool sd = false;
 
   string Hfile = "Hamiltonian.bin";
   string Dfile = "Dipole.bin";
@@ -55,6 +59,7 @@ private:
   string Jfile = "job.bin";
 
   ifstream jobfile;
+  ofstream inpfile;
 
 
 };

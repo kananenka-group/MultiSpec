@@ -10,14 +10,21 @@ void printv()
    printf("*        MultiSpec: a Package for Simulating Vibrational Spectra        *\n");
    printf("*                       of Condensed-phase Systems                      *\n");
    printf("*                                                                       *\n");
-   printf("*                              Version 1.2                              *\n");
-   printf("*                               July 2022                               *\n");
+   printf("*                              Version 1.3                              *\n");
+   printf("*                              August 2022                              *\n");
    printf("*              http://github.com/kananenka-group/MultiSpec              *\n");
    printf("*                                                                       *\n");
    printf("*             Copyright (c) 2021 - 2022 Alexei A. Kananenka             *\n");
    printf("*                                                                       *\n");
    printf("*************************************************************************");
 
+}
+
+string str_toupper(string s) {
+    transform(s.begin(), s.end(), s.begin(), 
+              [](unsigned char c){ return toupper(c); } 
+              );
+    return s;
 }
 
 int sturges(int size){ 

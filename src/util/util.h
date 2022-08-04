@@ -9,6 +9,7 @@
 #include <ctime>
 #include <chrono>
 #include <unistd.h>
+#include <algorithm>
 #include <limits.h>
 #include "../const/const.h"
 
@@ -22,5 +23,6 @@ const std::string currentDateTime();
 void uhstName();
 void removeFile(vector<string> filenames);
 float switchf(float ez);
+string str_toupper(string s);
 
 #endif

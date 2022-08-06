@@ -2,13 +2,13 @@
 
 water::water(string wm_name, string wS_wmap_name, string wB_map_name, 
              string job_type, string traj_file_name, string gro_file_name, 
-             string atoms_file_name, int nfr, int d2o,  bool doir, 
+             string atoms_file_name, int nfr, int d2o,  int nst, bool doir, 
              bool doraman, bool dosfg, bool doDoDov, bool intrac, 
              bool intermc_OHs, float trdip_for_SFG, float fermi_c) : 
              water_model_name_inp(wm_name), jobType(job_type), 
              traj_file(traj_file_name), gro_file(gro_file_name), 
              ams_file(atoms_file_name), wms(wS_wmap_name, job_type, intrac), 
-             wmb(wB_map_name, job_type), nframes(nfr), nd2o(d2o), 
+             wmb(wB_map_name, job_type), nframes(nfr), nd2o(d2o), startframe(nst),
              ir(doir), raman(doraman), sfg(dosfg), DoDv(doDoDov), intermcs(intermc_OHs),
              tdSFG(trdip_for_SFG), fc(fermi_c)
 {
@@ -55,7 +55,7 @@ water::water(string wm_name, string wS_wmap_name, string wB_map_name,
    fzf.resize(nchromt,0.0);
 
    // 
-   pz = bond_plz_ratio-1.0;
+   pz = constants::bond_plz_ratio-1.0;
 
    // open output files... 
    houtfile.open("Hamiltonian.bin", ios::binary | ios::out);
@@ -69,6 +69,16 @@ water::water(string wm_name, string wS_wmap_name, string wB_map_name,
    eft  = new rvec[nchroms];
 
    printf("\n** Generating Excitonic Hamiltonian for %d frames. **\n",nframes);
+
+   // Figure out frame to start reading from xtc file
+   if(startframe<1){
+      printf("   Cannot start from frame %d, setting starting frame to 1.\n",startframe);
+      startframe=1;
+   }else{
+      printf("   Starting from %d frame\n",startframe);
+   }
+
+   nframes += (startframe-1);
    int counter=0;
 
    if(ws || wf){
@@ -78,6 +88,10 @@ water::water(string wm_name, string wS_wmap_name, string wB_map_name,
    //                                                                         //
    /////////////////////////////////////////////////////////////////////////////
       while(traj.next()==0 && counter<nframes) {
+         counter++;
+         if(counter<startframe)
+           continue;
+
          x = traj.getCoords();
          traj.getBox(box);
          if(moveM) moveMsite();
@@ -91,7 +105,6 @@ water::water(string wm_name, string wS_wmap_name, string wB_map_name,
          if(ir) writeD(); 
          if(raman) writeP(); 
          if(sfg) writeFz();
-         counter++;
       }
    }
    /////////////////////////////////////////////////////////////////////////////
@@ -105,7 +118,8 @@ water::water(string wm_name, string wS_wmap_name, string wB_map_name,
    freqDist();
 
    // write a temporary file for passing some info for subsequent job
-   jobfile.write(reinterpret_cast<char*>(&nchromt), sizeof(int));
+   //jobfile.write(reinterpret_cast<char*>(&nchromt), sizeof(int));
+   writeJ();
 
 
 }
@@ -127,13 +141,13 @@ void water::CalcSQuant()
       printf("   SFG flag is on. Transition probablities\n");
       printf("                   and scaled transition dipoles will be calculated.\n");
       printf("   See P. A. Pieniazek et al., J. Chem. Phys. 135, 044701 (2011) for more details.\n");                
-      printf("   Cut-off in the switching function: %7.5f [A]\n",SWITCHF_CUT);
+      printf("   Cut-off in the switching function: %7.5f [A]\n",constants::SWITCHF_CUT);
       if(tdSFG<0){
          printf(" Error: Wrong value of SFG transition dipole location : %7.5f [A] ! \n",tdSFG); 
          exit(EXIT_FAILURE);
       }
       printf("   OH Transition dipole is located %7.5f [A] away from the O atom.\n",tdSFG);
-      tdSFG *= A0;
+      tdSFG *= constants::A0;
       ir = true;
       raman = true;
    }
@@ -158,7 +172,7 @@ void water::waterModel()
       trdip = 0.67;
       if(tdSFG<0)
          tdSFG = trdip;
-      trdip *= A0;
+      trdip *= constants::A0;
    }else if(water_model_name=="E3B3" || water_model_name=="TIP4P/2005"){
       if (water_model_name=="E3B3")
          printf("   Water model : E3B3 is based on TIP4P/2005 [ Abascal et al. J. Chem. Phys. 123, 234505 (2005) ]\n");
@@ -170,11 +184,11 @@ void water::waterModel()
       }
       printf("   M-site location will be adjusted to r(OM) = 0.15 A\n"); 
       moveM = true;
-      rom = 0.15*A0;
+      rom = constants::A0*0.15;
       trdip = 0.67;
       if(tdSFG<0)
          tdSFG = trdip;
-      trdip *= A0;
+      trdip *= constants::A0;
    }else if(water_model_name=="SPCE" || water_model_name=="SPC/E" || water_model_name=="SPC"){
       printf("   Water model : SPCE [ Berendsen et al. J. Phys. Chem. 91, 6269 (1987) ]\n");
       if(atoms_in_mol!=3){
@@ -185,7 +199,7 @@ void water::waterModel()
       trdip = 0.58;
       if(tdSFG<0)
          tdSFG = trdip;
-      trdip *= A0;
+      trdip *= constants::A0;
    }else{
       printf(" Error: %s water model is not recognized ! ",water_model_name.c_str()); 
       printf("        Supported water models are: SPC, SPCE, TIP4P, TIP4P/2005, E3B2, E3B3.\n");
@@ -450,8 +464,10 @@ void water::readCharges()
 void water::IsoMix()
 {
 //
+   double kst = constants::kEqIsoW;
+
    printf("\n** Isotope mixed simulation. \n");
-   printf("   Equilibrium constant for H2O + D2O <-> 2HOD is %7.5f \n",kEqIsoW);
+   printf("   Equilibrium constant for H2O + D2O <-> 2HOD is %7.5f \n",kst);
 
    if(nd2o <= 0){
      printf(" Error! Wrong number of D2O molecules: %d \n",nd2o);
@@ -464,8 +480,8 @@ void water::IsoMix()
    double sk, rt, x1, x2;
    int x1i, x2i, xi, ntot;
 
-   sk = sqrt(kEqIsoW);
-   rt = kEqIsoW*nd2o*nd2o + 16.0*nd2o*nh2o - 2.0*kEqIsoW*nd2o*nh2o + kEqIsoW*nh2o*nh2o;
+   sk = sqrt(kst);
+   rt = kst*nd2o*nd2o + 16.0*nd2o*nh2o - 2.0*kst*nd2o*nh2o + kst*nh2o*nh2o;
 
    if(rt >=0 ){
      rt = sqrt(rt);
@@ -475,8 +491,8 @@ void water::IsoMix()
       exit(EXIT_FAILURE);
    }
 
-   x1 = (kEqIsoW*nd2o + kEqIsoW*nh2o - sk*rt)/(-8.0 + 2.0*kEqIsoW);
-   x2 = (kEqIsoW*nd2o + kEqIsoW*nh2o + sk*rt)/(-8.0 + 2.0*kEqIsoW);
+   x1 = (kst*nd2o + kst*nh2o - sk*rt)/(-8.0 + 2.0*kst);
+   x2 = (kst*nd2o + kst*nh2o + sk*rt)/(-8.0 + 2.0*kst);
 
    x1i = rint(x1);
    x2i = rint(x2);
@@ -571,7 +587,7 @@ double water::waterTDC(const rvec &roha, const rvec &trda, const rvec &va,
    dm = dist(ddv);
    dm3 = dm*dm*dm;
    unitv(ddv);
-   wc = au_to_wn*(dot(roha,rohb)-3.0*dot(roha,ddv)*dot(rohb,ddv))/dm3;
+   wc = constants::AU_TO_WN*(dot(roha,rohb)-3.0*dot(roha,ddv)*dot(rohb,ddv))/dm3;
    return wc;
 }
 
@@ -776,6 +792,9 @@ void water::writeH()
   }
 }
 
+void water::writeJ()
+{ jobfile.write(reinterpret_cast<char*>(&nchromt), sizeof(int)); } 
+
 void water::writeD()
 { doutfile.write(reinterpret_cast<char*>(&tdmuf[0]), (3*nchromt)*sizeof(float)); }
 
@@ -818,7 +837,7 @@ void water::calcEf(){
             addRvec(x[Ok],x[tagH],roh,-1);
             pbc(roh,box);
             doh = dist(roh);
-            if(doh>O_to_H_dist_water_cutoff) continue;
+            if(doh>constants::O_to_H_dist_water_cutoff) continue;
             for(int l=0; l<atoms_in_mol; ++l){
                thisA = oxyInd[k]+l;
                addRvec(x[tagH],x[thisA],rAH,-1);
@@ -917,12 +936,14 @@ void water::moveMsite()
 
 void water::freqDist()
 {
-   unsigned int size = omegas.size();
-   nbins = sturges(size); //1 + (int) log2(size); //(int) sqrt(size);
-   w_dist.resize(nbins,0);
-
    if(!DoDv)
       omegas.erase(remove(begin(omegas), end(omegas), 0.0), end(omegas));
+
+   unsigned int size = omegas.size();
+   nbins = sturges(size); //1 + (int) log2(size); //(int) sqrt(size);
+
+   vector<int> w_dist;
+   w_dist.resize(nbins,0);
 
    auto min_f = min_element(omegas.begin(), omegas.end());
    auto max_f = max_element(omegas.begin(), omegas.end());
@@ -936,9 +957,9 @@ void water::freqDist()
       w_dist[idx] += 1;
    }
 
-   ofstream w_file;
-   w_file.open(w_dist_fname);
-   if(!w_file.is_open()){
+   ofstream w_dist_file;
+   w_dist_file.open(w_dist_fname);
+   if(!w_dist_file.is_open()){
       printf(" Error! Cannot open file: %s \n",w_dist_fname.c_str());
       exit(EXIT_FAILURE);
    }
@@ -947,8 +968,8 @@ void water::freqDist()
    printf("   Smallest frequency = %7.2f [cm-1], Largest frequency = %7.2f [cm-1]\n",*min_f,*max_f);
    printf("   Writing frequency distribution histogram into %s \n",w_dist_fname.c_str());
    for(int t=0; t<nbins; ++t)
-      w_file <<  *min_f + (t+1)*dw/2.0 << "  " << w_dist[t] << endl;
+      w_dist_file <<  *min_f + (t+1)*dw/2.0 << "  " << w_dist[t] << endl;
 
-   w_file.close();
+   w_dist_file.close();
 
 }

@@ -460,7 +460,7 @@ void Exc::moveF()
   vector<complex<double>> U(nchrom2, complex_zero);
 
   for (int ii=0; ii<nchrom; ii++){
-     arg = img*W[ii]*dt/HBAR;
+     arg = img*W[ii]*dt/constants::HBAR;
      U[ii*nchrom+ii] = exp(arg);
    }
 
@@ -751,10 +751,10 @@ void Exc::fgrid1D()
    fill_n(wgrid1d.begin(), NFFT, 0.0);
 
    for(int i=NFFT/2, j=0; i<NFFT; ++i, ++j)
-       wgrid1d[j] = 2*M_PI*HBAR*(i-NFFT)/(dt*NFFT) + w_avg;
+       wgrid1d[j] = 2*M_PI*constants::HBAR*(i-NFFT)/(dt*NFFT) + w_avg;
    
    for(int i=0, j=NFFT/2; i<NFFT/2; ++i, ++j)
-      wgrid1d[j] = 2*M_PI*HBAR*i/(dt*NFFT) + w_avg;
+      wgrid1d[j] = 2*M_PI*constants::HBAR*i/(dt*NFFT) + w_avg;
 
 }
 

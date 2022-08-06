@@ -18,7 +18,7 @@ void FFT1D(vector<complex<double>> fft_in, vector<complex<double>> &fft_out,
    vector<complex<double>> fftIn (nfft, complex_zero);
    vector<complex<double>> fftOut(nfft, complex_zero);
 
-   scale = dt*nfft/(2.0*M_PI*HBAR*sqrt(nfft));
+   scale = dt*nfft/(2.0*M_PI*constants::HBAR*sqrt(nfft));
   
    plan = fftw_plan_dft_1d(nfft, reinterpret_cast<fftw_complex*>(&fftIn[0]),
                            reinterpret_cast<fftw_complex*>(&fftOut[0]),

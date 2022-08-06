@@ -21,7 +21,7 @@ class water{
 
 public:
    water(string, string, string, string, string, string, 
-         string, int, int, bool, bool, bool, bool, bool,
+         string, int, int, int, bool, bool, bool, bool, bool,
          bool, float, float);
 
   ~water();
@@ -38,6 +38,7 @@ private:
 
   int nframes;
   int nd2o = 0;
+  int startframe = 1;
   
   bool ir;
   bool raman;
@@ -90,7 +91,6 @@ private:
   vector<float> w20b;
 
   vector<float> omegas;
-  vector<int> w_dist;
 
   int now, nhw, nmw;
   int nh2o, nhod;
@@ -145,6 +145,7 @@ private:
   void writeD();
   void writeP();
   void writeFz();
+  void writeJ();
 
 };
 

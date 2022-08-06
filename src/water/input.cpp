@@ -28,6 +28,7 @@ Input::Input(int argc, char ** argv){
        ("trdipSFG",    po::value<float>(&trdipSFG),    "distance from O atom and transition dipole for SFG")
        ("intrac",      po::value<bool>(&intrac),       "intramolecular OH stretch coupling")
        ("intercOH",    po::value<bool>(&intercs),      "OH stretch intermolecular coupling")
+       ("start",       po::value<int>(&startframe),    "starting frame to read from xtc file")
        ;
 
        po::variables_map vm;
@@ -74,6 +75,7 @@ Input::Input(int argc, char ** argv){
     }
     inpfile << "       intrac = " << intrac << endl;
     inpfile << "     intercOH = " << intercs << endl;
+    inpfile << "        start = " << startframe << endl;
     inpfile.close();
 
 }

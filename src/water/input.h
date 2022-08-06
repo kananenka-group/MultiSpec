@@ -33,10 +33,12 @@ public:
   bool getInermcs()      const { return intercs;}
   float getFc()          const { return fc; }
   float getTDSFG()       const { return trdipSFG; }
+  int getStartFrame()    const { return startframe; }
 
 private:
   int nframes = 1;
   int nd2o = 0;
+  int startframe = 1;
 
   bool ir    = false; 
   bool raman = false; 

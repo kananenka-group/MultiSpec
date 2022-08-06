@@ -43,7 +43,7 @@ float switchf(float ez)
    float rc, rc2, rc3;
    float fz1, fz2;
 
-   rc  = SWITCHF_CUT*A0;
+   rc  = constants::SWITCHF_CUT*constants::A0;
    rc2 = rc*rc;
    rc3 = rc2*rc;
    fz1 = 0;

@@ -15,7 +15,7 @@
 
 using namespace std;
 
-int sturges(int);
+void remove_leading_trailing_whitespace(string &str);
 void printv();
 void tstamp(std::string message);
 void timet(std::chrono::steady_clock::time_point start, std::chrono::steady_clock::time_point end);

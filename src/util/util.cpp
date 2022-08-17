@@ -10,7 +10,7 @@ void printv()
    printf("*        MultiSpec: a Package for Simulating Vibrational Spectra        *\n");
    printf("*                       of Condensed-phase Systems                      *\n");
    printf("*                                                                       *\n");
-   printf("*                              Version 1.3                              *\n");
+   printf("*                              Version 2.0                              *\n");
    printf("*                              August 2022                              *\n");
    printf("*              http://github.com/kananenka-group/MultiSpec              *\n");
    printf("*                                                                       *\n");
@@ -20,18 +20,17 @@ void printv()
 
 }
 
+void remove_leading_trailing_whitespace(string &str)
+{ 
+  str.erase(str.begin(), find_if(str.begin(), str.end(), bind1st(std::not_equal_to<char>(), ' '))); 
+  str.erase(find_if(str.rbegin(), str.rend(), bind1st(not_equal_to<char>(), ' ')).base(), str.end());
+}
+
 string str_toupper(string s) {
     transform(s.begin(), s.end(), s.begin(), 
               [](unsigned char c){ return toupper(c); } 
               );
     return s;
-}
-
-int sturges(int size){ 
-// uses Sturges' rule to calculate
-// number of bins for the histogram
-  int nbins = 1 + (int) log2(size);
-  return nbins;
 }
 
 float switchf(float ez)

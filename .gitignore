@@ -41,7 +41,6 @@
 *.sbatch
 *.err
 *.out
-*.sh
 
 # binary files
 *.bin
@@ -64,3 +63,9 @@ build/
 
 #input files
 *.inp
+
+#cmake-related files
+*.txt
+Makefile
+cmake_install.cmake
+CMakeFiles/

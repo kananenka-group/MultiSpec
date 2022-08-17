@@ -8,6 +8,10 @@ const double HBAR = 5.308837367; // in cm-1 * ps
 const double AU_TO_WN = 2.19474e5;
 const double A0 = 1.889726125;
 
+// masses of common atoms
+const float mO = 16.000;
+const float mH = 1.008;
+
 // WATER MODULE------------
 //7.831 A * 1.88 conversion to au, 7.831 A cut-off is chosen for historical reasons
 // see: JCTC 9, 3109 (2013), JCP 128, 224511 (2008), JCP 132, 204505 (2010)

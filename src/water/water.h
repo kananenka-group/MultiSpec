@@ -21,8 +21,8 @@ class water{
 
 public:
    water(string, string, string, string, string, string, 
-         string, int, int, int, bool, bool, bool, bool, bool,
-         bool, float, float);
+         string, int, int, int, bool, bool, bool, bool, 
+         bool, bool, bool, float, float);
 
   ~water();
 
@@ -44,6 +44,7 @@ private:
   bool raman;
   bool sfg;
   bool DoDv = false;
+  bool printHam;
   bool intrac;
   bool intermcs;
 
@@ -91,10 +92,11 @@ private:
   vector<float> w20b;
 
   vector<float> omegas;
+  vector<float> w_intra;
+  vector<float> w_inter;
 
   int now, nhw, nmw;
   int nh2o, nhod;
-  int nbins = 100;
 
   bool ws = true;
   bool wb = false;
@@ -111,7 +113,9 @@ private:
 
   string water_map_name;
   string chromType;
-  string w_dist_fname = "freq_hist.dat";
+  string w_dist_fname =  "w_diag.dat";
+  string w_intra_fname = "w_intra.dat";
+  string w_inter_fname = "w_inter.dat";
 
   ofstream houtfile;
   ofstream doutfile;

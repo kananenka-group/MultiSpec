@@ -3,14 +3,14 @@
 water::water(string wm_name, string wS_wmap_name, string wB_map_name, 
              string job_type, string traj_file_name, string gro_file_name, 
              string atoms_file_name, int nfr, int d2o,  int nst, bool doir, 
-             bool doraman, bool dosfg, bool doDoDov, bool intrac, 
+             bool doraman, bool dosfg, bool doDoDov, bool eHp, bool intrac, 
              bool intermc_OHs, float trdip_for_SFG, float fermi_c) : 
              water_model_name_inp(wm_name), jobType(job_type), 
              traj_file(traj_file_name), gro_file(gro_file_name), 
              ams_file(atoms_file_name), wms(wS_wmap_name, job_type, intrac), 
              wmb(wB_map_name, job_type), nframes(nfr), nd2o(d2o), startframe(nst),
-             ir(doir), raman(doraman), sfg(dosfg), DoDv(doDoDov), intermcs(intermc_OHs),
-             tdSFG(trdip_for_SFG), fc(fermi_c)
+             ir(doir), raman(doraman), sfg(dosfg), DoDv(doDoDov), printHam(eHp),
+             intermcs(intermc_OHs), tdSFG(trdip_for_SFG), fc(fermi_c)
 {
    // removing old files
    vector<string> files_to_remove;
@@ -23,6 +23,10 @@ water::water(string wm_name, string wS_wmap_name, string wB_map_name,
 
    // read gro file:
    readGro();
+   if (traj.getNatoms() != natoms) {
+      printf("ERROR! gro file does not have the same number of atoms as traj.\n");
+      exit(EXIT_FAILURE);
+   }
 
    // read charges
    readCharges();
@@ -115,7 +119,8 @@ water::water(string wm_name, string wS_wmap_name, string wB_map_name,
 
 
    // calc. frequency distributions
-   freqDist();
+   if(printHam)   
+      freqDist();
 
    // write a temporary file for passing some info for subsequent job
    //jobfile.write(reinterpret_cast<char*>(&nchromt), sizeof(int));
@@ -244,7 +249,7 @@ void water::waterJob(){
       offs = 3;
       printf("   Job Type: pure H2O stretch fundamental-bend overtone simulation.\n"); 
       printf("             %d OH chromophores, %d HOH chromophores \n",nchroms,nchromb);
-      printf("             Fermi coupling = %7.5f [cm-1] \n",fc);
+      printf("             Fermi coupling = %7.2f [cm-1] \n",fc);
    }else if(jobType=="wswbD2O"){
       wf = true;
       nchroms = 2*nwater;
@@ -252,14 +257,14 @@ void water::waterJob(){
       offs = 3;
       printf("   Job Type: pure D2O stretch fundamental-bend overtone simulation.\n");
       printf("             %d OD chromophores, %d DOD chromophores \n",nchroms,nchromb);
-      printf("             Fermi coupling = %7.5f [cm-1] \n",fc);
+      printf("             Fermi coupling = %7.2f [cm-1] \n",fc);
    }else if(jobType=="wswbiso"){
       wf = true;
       nchroms = 2*nwater;
       nchromb = nwater;
       offs = 3;
       printf("   Job Type: Mixed H2O/D2O stretch fundamental-bend overtone simulation.\n");
-      printf("             Fermi coupling = %7.5f [cm-1] \n",fc);
+      printf("             Fermi coupling = %7.2f [cm-1] \n",fc);
       IsoMix();
    }else{
       printf(" Error! Type of spectrum to calculate is not recognized: %s. \n ",jobType.c_str());
@@ -414,7 +419,7 @@ void water::readCharges()
       for(unsigned int ii=0; ii<uAtoms.size(); ++ii){
          if(strs[0]==uAtoms[ii]){
             if(strs.size() != 3){
-               printf(" Wrong line for atom %s in %s. Expecting both charge and mass. \n",uAtoms[ii].c_str(),ams_file.c_str());
+               printf("Error! Wrong line for atom %s in %s. Expecting both charge and mass. \n",uAtoms[ii].c_str(),ams_file.c_str());
                printf(" Expecting : <atom> <charge> <mass>. Got \n");
                for(unsigned int ij=0; ij<strs.size(); ++ij)
                   printf(" %s ",strs[ij].c_str());
@@ -593,6 +598,9 @@ double water::waterTDC(const rvec &roha, const rvec &trda, const rvec &va,
 
 void water::calcWXPM()
 {
+//
+// Diagonal frequency:
+//
    int k;
    if(jobType=="wsOH" || jobType=="wsOD" || jobType=="wswbH2O" || jobType=="wswbD2O"){
       for(int i=0;i<nchroms;++i){
@@ -699,6 +707,7 @@ void water::intermC(){
 ///////////////////////////////////////////////////////////////////////
 
   rvec roha, trda;
+  double val;
 
   for(int i=0; i<nwater; ++i){
      for(int k=1;k<3;++k){
@@ -710,8 +719,12 @@ void water::intermC(){
         // Hamiltonian
         for(int j=(i+1); j<nwater; ++j){
            for(int l=1;l<3;++l){
-              hf[nchromt*(offs*i+k-1)+offs*j+l-1] = waterTDC(roha, trda, x[oxyInd[j]+l], x[oxyInd[j]], box);
-              hf[nchromt*(offs*i+k-1)+offs*j+l-1] *= m10[2*i+k-1]*m10[2*j+l-1]*x10[2*i+k-1]*x10[2*j+l-1];
+              val = waterTDC(roha, trda, x[oxyInd[j]+l], x[oxyInd[j]], box);
+              val *= m10[2*i+k-1]*m10[2*j+l-1]*x10[2*i+k-1]*x10[2*j+l-1];
+              hf[nchromt*(offs*i+k-1)+offs*j+l-1] = val;
+              //hf[nchromt*(offs*i+k-1)+offs*j+l-1] = waterTDC(roha, trda, x[oxyInd[j]+l], x[oxyInd[j]], box);
+              //hf[nchromt*(offs*i+k-1)+offs*j+l-1] *= m10[2*i+k-1]*m10[2*j+l-1]*x10[2*i+k-1]*x10[2*j+l-1];
+              w_inter.push_back(val);
            }
         }
      }
@@ -874,6 +887,7 @@ void water::updateEx(){
 //////////////////////////////////////////////////////////////////////////////////////
 
   int ij;
+  double val;
 
   fill_n(hf.begin(), nchromt2, 0.0);
 
@@ -893,8 +907,12 @@ void water::updateEx(){
   // intramolecular coupling...
   for(int ii=0; ii<nwater; ++ii){
      ij = offs*ii;
-     hf[ij*nchromt+ij+1] = wms.getcnn(efs[2*ii],x10[2*ii],p10[2*ii],
-                                      efs[2*ii+1],x10[2*ii+1],p10[2*ii+1]);
+     val = wms.getcnn(efs[2*ii],x10[2*ii],p10[2*ii], efs[2*ii+1],x10[2*ii+1],p10[2*ii+1]);
+     hf[ij*nchromt+ij+1] = val;
+
+     //hf[ij*nchromt+ij+1] = wms.getcnn(efs[2*ii],x10[2*ii],p10[2*ii],
+     //                                 efs[2*ii+1],x10[2*ii+1],p10[2*ii+1]);
+     w_intra.push_back(val);
   }
 
   // Fermi coupling
@@ -936,26 +954,12 @@ void water::moveMsite()
 
 void water::freqDist()
 {
+   unsigned int t;
+//
+// Diagonal frequencies
+//
    if(!DoDv)
       omegas.erase(remove(begin(omegas), end(omegas), 0.0), end(omegas));
-
-   unsigned int size = omegas.size();
-   nbins = sturges(size); //1 + (int) log2(size); //(int) sqrt(size);
-
-   vector<int> w_dist;
-   w_dist.resize(nbins,0);
-
-   auto min_f = min_element(omegas.begin(), omegas.end());
-   auto max_f = max_element(omegas.begin(), omegas.end());
-
-   float dw = (*max_f - *min_f)/nbins;
-
-   int idx;
-
-   for(unsigned int k=0; k<size; ++k){
-      idx = (int) (omegas[k] - *min_f)/dw;
-      w_dist[idx] += 1;
-   }
 
    ofstream w_dist_file;
    w_dist_file.open(w_dist_fname);
@@ -964,12 +968,43 @@ void water::freqDist()
       exit(EXIT_FAILURE);
    }
 
-   printf("\n** Generating frequency distribution nbins[Sturges' rule]=%d \n",nbins);
-   printf("   Smallest frequency = %7.2f [cm-1], Largest frequency = %7.2f [cm-1]\n",*min_f,*max_f);
-   printf("   Writing frequency distribution histogram into %s \n",w_dist_fname.c_str());
-   for(int t=0; t<nbins; ++t)
-      w_dist_file <<  *min_f + (t+1)*dw/2.0 << "  " << w_dist[t] << endl;
+   printf("   Writing diagonal frequencies into %s \n",w_dist_fname.c_str());
+   for(t=0; t<omegas.size(); ++t)
+      w_dist_file << omegas[t] << endl;
 
    w_dist_file.close();
+//
+// Intramolecular couplings
+//
+   ofstream w_intra_file;
+   w_intra_file.open(w_intra_fname);
+   if(!w_intra_file.is_open()){
+      printf(" Error! Cannot open file: %s \n",w_intra_fname.c_str());
+      exit(EXIT_FAILURE);
+   }
 
+   printf("   Writing intramolecular couplings [in cm-1] into %s \n",w_intra_fname.c_str());
+   if(jobType=="wswbH2O" || jobType=="wswbD2O" || jobType=="wswbiso")
+      printf("   Note that Fermi couplings %7.2f [cm-1] will not be printed.\n",fc);
+
+   for(t=0; t<w_intra.size(); ++t)
+      w_intra_file << w_intra[t] << endl;
+
+   w_intra_file.close();
+//
+// Intermolecular couplings
+//
+  ofstream w_inter_file;
+   w_inter_file.open(w_inter_fname);
+   if(!w_inter_file.is_open()){
+      printf(" Error! Cannot open file: %s \n",w_inter_fname.c_str());
+      exit(EXIT_FAILURE);
+   }
+
+   printf("   Writing intermolecular couplings [in cm-1] into %s \n",w_inter_fname.c_str());
+   for(t=0; t<w_inter.size(); ++t)
+      w_inter_file << w_inter[t] << endl;
+
+   w_inter_file.close();
+   
 }

@@ -29,6 +29,7 @@ Input::Input(int argc, char ** argv){
        ("intrac",      po::value<bool>(&intrac),       "intramolecular OH stretch coupling")
        ("intercOH",    po::value<bool>(&intercs),      "OH stretch intermolecular coupling")
        ("start",       po::value<int>(&startframe),    "starting frame to read from xtc file")
+       ("exc_ham",     po::value<bool>(&excHam),       "print diagonal frequencies, inter- and intramolecular couplings")
        ;
 
        po::variables_map vm;
@@ -76,6 +77,7 @@ Input::Input(int argc, char ** argv){
     inpfile << "       intrac = " << intrac << endl;
     inpfile << "     intercOH = " << intercs << endl;
     inpfile << "        start = " << startframe << endl;
+    inpfile << "      exc_ham = " << excHam << endl;
     inpfile.close();
 
 }

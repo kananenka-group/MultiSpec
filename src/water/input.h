@@ -34,6 +34,7 @@ public:
   float getFc()          const { return fc; }
   float getTDSFG()       const { return trdipSFG; }
   int getStartFrame()    const { return startframe; }
+  bool getExcHam()       const { return excHam; }
 
 private:
   int nframes = 1;
@@ -50,6 +51,8 @@ private:
   bool dodov = false;
   bool intrac= true;
   bool intercs=true;
+
+  bool excHam = false;
 
   string xtc_file    = "traj.xtc";
   string stretch_map_name; 

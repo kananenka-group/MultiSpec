@@ -21,7 +21,8 @@ int main(int argc, char ** argv){
    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 
    // create and run simulation
-   amideI S (input.getGroFile(), input.getTrajFile(), input.getItpfs());
+   amideI S (input.getGroFile(), input.getTrajFile(), input.getItpfs(),
+             input.getTopFile(), input.getJobType());
 
    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 

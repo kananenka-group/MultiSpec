@@ -20,7 +20,7 @@ using namespace std;
 class amideI{
 
 public:
-   amideI(string, string, vector<string>);
+   amideI(string, string, vector<string>, string, string);
 
   ~amideI();
 
@@ -30,6 +30,8 @@ private:
 
   string gro_file;
   string traj_file;
+  string top_file;
+  string spec_type;
  
   vector<string> itp_files;
 

@@ -1,7 +1,7 @@
 #include "system.h"
 
-System::System(string gro_file, vector<string> itp_files) 
-               : gro_file(gro_file), itp_files(itp_files)
+System::System(string gro_file, vector<string> itp_files, string top_file) 
+               : gro_file(gro_file), itp_files(itp_files), top_file(top_file)
 {
 // This class will contain information about each atom:
 //   To be read from gro file
@@ -16,15 +16,70 @@ System::System(string gro_file, vector<string> itp_files)
 //
 
    readGro();
+   readTop();
    readItp();
-   //common();
-   //readAtoms();
 
    // determine starting indices for each residue
    resStart.push_back(0);
    for(unsigned int ii=0; ii<atoms.size()-1; ++ii) 
       if(atoms[ii].resNum != atoms[ii+1].resNum)
          resStart.push_back(ii+1);
+}
+
+void System::readTop()
+{
+//
+// Here we will read info about molecules from system's
+// topology file
+//
+   ifstream topfile(top_file);
+   if(!topfile.good()){
+      printf(" ERROR: gromacs file %s cannot be read.\n",top_file.c_str());
+      exit(EXIT_FAILURE);
+   }
+   printf("\n** Reading GROMACS topology file %s**\n",top_file.c_str());
+
+   string line;
+   bool recording=false;
+   int pos;
+
+   while(getline(topfile, line)) {
+
+      pos = line.find(";");
+      if(pos==0) continue;
+
+      pos = line.find("#");
+      if(pos==0) continue;
+
+      if(line.erase(line.find_last_not_of(" \n\r\t")+1).length()==0){
+         if(!recording)
+            continue;
+         else
+            break;
+      }
+
+      if(line.compare("[ molecules ]")==0){
+         recording=true;
+         continue;
+      }
+
+      if(recording){
+         string buf;
+         stringstream  linestream(line);
+         vector<string> strs;
+         while(linestream >> buf)
+            strs.push_back(buf);
+
+         molecules.push_back(strs[0]);
+         nmol.push_back(stoi(strs[1]));
+      }
+   }
+   topfile.close();  
+
+   printf("   Found the following ``molecules'':\n   ");
+   for(unsigned int n=0; n<molecules.size();++n)
+      printf("%s(%d) ",molecules[n].c_str(),nmol[n]);
+   printf("\n");
 }
 
 void System::readItp()
@@ -34,12 +89,12 @@ void System::readItp()
    int nItpFiles = itp_files.size();
    printf("\n** Reading GROMACS topology files. %d files provided.**\n",nItpFiles);
 
-   string line, entry, substr, atom_name, residue_name;
-   int pos, resid;
-   bool recording;
-
-   //int counter=0;
-   //int atom_count=0;
+   string line, entry, substr, atom_name, mt;
+   int pos; 
+   int n_this_res;
+   bool recording, mtfound, skip;
+   vector<AtomsRes> Residue;
+   vector<bool> assigned(natoms,false);
 
    for(int ifile=0; ifile<nItpFiles; ++ifile)
    {
@@ -52,7 +107,10 @@ void System::readItp()
       printf("   Reading  %s \n",itp_files[ifile].c_str());   
 
       recording=false;
-      resid=-1;
+      mtfound = false;
+      skip=false;
+      n_this_res=0;
+      //this_residue=-1;
       // 2. Reading the file
       while(getline(itpfile, line)) {
          // Gromacs itp file
@@ -62,6 +120,9 @@ void System::readItp()
          //if(line.length()==0) continue;
 
          pos = line.find(";");
+         if(pos==0) continue;
+
+         pos = line.find("#");
          if(pos==0) continue;
 
          // when searching for [ atoms ] skip empty lines
@@ -75,13 +136,42 @@ void System::readItp()
               break;
          }
 
+         // file [ moleculetype ] first
+         if(!mtfound)
+            if(line.compare("[ moleculetype ]")==0){
+               mtfound = true;
+               continue;
+            }
+
+         if(mtfound && !skip){
+            string buf;
+            stringstream  linestream(line);
+            vector<string> strs;
+            while(linestream >> buf)
+               strs.push_back(buf);
+
+            if(strs.size()==2){
+               mt = strs[0];
+               skip=true;
+            }else{
+               printf("Error! Cannot understand this moleculetype %s\n",line.c_str());
+               exit(EXIT_FAILURE);
+            }
+         }
+
+         // try to understand what we are dealing with here
+         for(unsigned int m=0; m<molecules.size(); ++m)
+            if(mt.compare(molecules[m])==0){
+               n_this_res = nmol[m];
+               continue;
+            }
+
          // find [ atoms ] line
          if(line.compare("[ atoms ]")==0){
             recording=true;
-            starting=true;
             continue;
          }
-      
+
          // save atoms 
          if(recording){ 
             string buf;
@@ -89,75 +179,96 @@ void System::readItp()
             vector<string> strs;
             while(linestream >> buf)
                strs.push_back(buf);
-  
+ 
             AtomsRes temp;
-            temp.resNum  = stoi(strs[2]);
+            temp.resNum  = stoi(strs[2]); //=residue_number
             temp.resName = strs[3];
             temp.atomName= strs[4];
-            temp.chgn    = stoi(strs[5]);
             temp.charge  = stof(strs[6]);
-            if(strs.size()==8)
-               temp.mass    = stof(strs[7]);
 
-            if(resid==stoi(strs[2]))
-            // continue with the same residue
-            resid = stoi(strs[2]);
+            // sometimes (water) atomic mass is missing
+            // trying to add it here
+            if(strs.size()>=8){
+               temp.mass    = stof(strs[7]);
+            }else{
+               // probably mass is missing...trying to add
+               if(temp.atomName.compare("OW")==0 || 
+                  temp.atomName.compare("OH2")==0){
+                  temp.mass = 16.00;
+               }else if(temp.atomName.compare("HW1")==0 || 
+                        temp.atomName.compare("HW2")==0 || 
+                        temp.atomName.compare("H1")==0  || 
+                        temp.atomName.compare("H2")==0){
+                  temp.mass = 1.008;
+               }else if(temp.atomName.compare("MW")==0  || 
+                        temp.atomName.compare("LP1")==0 || 
+                        temp.atomName.compare("LP2")==0){
+                  temp.mass = 0.000;
+               }else{
+                  printf("Error! Not enough atom information in this line: %s \n",line.c_str());
+                  exit(EXIT_FAILURE);
+               }
+            }
+
+            Residue.push_back(temp);
 
          } // end recording
 
       } // end reading itp file
+      matchRes(Residue,assigned,n_this_res);
+      Residue.clear();
       itpfile.close();
-
    }
+
+   printAtomInfo(assigned);
 
 
 }
 
-void System::common()
+void System::matchRes(vector<AtomsRes> R,vector<bool> &good, int n_this)
 {
 //
-// here we detect common repeating molecules like solvent
-// currently implemented: water
-// 
-// 1. check for water; this is good for up to 5-site water
-// models but can currently recognize 3 and 4-site models
-//   water=false;
+// Match atoms provided in GROMACS configuration file
+// with atoms from topology file and update charges and masses
 //
-//   for(int i=0; i<(natoms-4); ++i){
-//       if(atoms[i].atomName   =="OW"  &&
-//          atoms[i+1].atomName =="HW1" &&
-//          atoms[i+2].atomName =="HW2"){
-//             water=true;
-//             W.sites=3;
-//       }
-//       if(atoms[i+3].atomName == "MW")
-//          W.sites = 4;
-//   }
-//
-//   W.nwater = 0;   
-//   if(water){
-//      for(int i=0; i<(natoms-W.sites+1); ++i){
-//         if(atoms[i].atomName   =="OW"  &&
-//            atoms[i+1].atomName =="HW1" &&
-//            atoms[i+2].atomName =="HW2"){
-//            if(W.sites==3){
-//               W.nwater+=1;
-//               W.Oind.push_back(i);
-//            }
-//            else if(W.sites==4){
-//               if(atoms[i+3].atomName == "MW"){
-//                  W.nwater+=1;
-//                  W.Oind.push_back(i);
-//               }
-//            }
-//         }
-//      }
-//    }
-//   
-//    if(water)  
-//       printf("   %d-site water is detected. Number of water molecules: %d\n",
-//              W.sites,W.nwater); 
-//
+   int rlen = R.size();
+   bool match=true;
+
+    //
+    // if this molecule occurs just once in the config file
+    // we will match it by the residue number, residue name, and
+    // atom name
+    //
+    // if this molecule occurs multiple times in the config file
+    // we will match it by residue name and atom name
+    //
+    for(int n=0; n<(natoms-rlen+1); ++n){
+       match=true;
+       for(int m=0; m<rlen; ++m){
+          if(n_this==1){
+             if(R[m].resNum!=atoms[n+m].resNum   ||
+                R[m].resName!=atoms[n+m].resName || 
+                R[m].atomName!=atoms[n+m].atomName){
+                match=false;
+                continue;
+             }
+          }else{
+             if(R[m].resName!=atoms[n+m].resName ||
+                R[m].atomName!=atoms[n+m].atomName){
+                match=false;
+                continue;
+             }
+          }
+       }
+       if(match){
+          for(int m=0; m<rlen; ++m){
+             atoms[n+m].charge=R[m].charge;
+             atoms[n+m].mass=R[m].mass;
+             good[n+m]=true;
+          } 
+       }
+    }   
+
 }
 
 void System::readGro()
@@ -224,121 +335,40 @@ void System::readGro()
 
 System::~System(){ }
 
-void System::readAtoms()
+void System::printAtomInfo(const vector<bool> assigned)
 {
-//
-// Read charges and other info from atoms file or
-// itp file (TODO)
-//
-//   ifstream file(ams_file);
-//   if (!file.good()) {
-//      printf("ERROR: atom info file %s cannot be read.\n",ams_file.c_str());
-//      exit(EXIT_FAILURE);
-//   }
-//
-//   printf("\n** Reading file with atomic information: %s **\n",ams_file.c_str());
-//
-//   int pos;
-//   string line;
-//   vector<bool> assigned(natoms,false);
-//
-//   while(getline(file,line)){
-//     
-//      pos = line.find("#");
-//      if(pos==0) continue;
-//
-//      string buf;
-//      stringstream  linestream(line);
-//
-//      //linestream >> entry;
-//      vector<string> strs;
-//      while(linestream >> buf)
-//         strs.push_back(buf);
-//
-//      if(strs.size() != 5){
-//         printf("Error! Cannot understand this line in %s file:\n",ams_file.c_str());
-//         printf("       %s \n",line.c_str());
-//         exit(EXIT_FAILURE);
-//      }
-//
-//      // assign
-//      for(int i=0; i<natoms; ++i){
-//         if(atoms[i].resNum==stoi(strs[0]) &&
-//            atoms[i].resName == strs[1]    && 
-//            atoms[i].atomName== strs[2]){
-//            atoms[i].charge = stof(strs[3]);
-//            atoms[i].mass   = stof(strs[4]);
-//            assigned[i] = true;
-//         }
-//      }
-//
-//      // we should also check for solvent and other commonly repeating 
-//      // residues detected above
-//      if(water){
-//        // this atom can be a part of water molecule
-//        if(strs[2]=="OW")
-//            W.Ochg = stof(strs[3]);
-//        if(strs[2]=="HW1" || strs[2]=="HW2")
-//            W.Hchg = stof(strs[3]);
-//        if(strs[2]=="MW")
-//            W.Mchg = stof(strs[3]);
-//      }
-//
-//   }
-//
-//   // if not all atoms have been assigned this might be due
-//   // to repeating solvent residues. Check if we have solvent
-//   if(water){
-//      for(int i=0; i<natoms;++i){
-//         if(atoms[i].atomName== "OW"){
-//            atoms[i].charge = W.Ochg;
-//            atoms[i].mass   = constants::mO;
-//            assigned[i] = true;
-//         }else if(atoms[i].atomName== "HW1" || atoms[i].atomName=="HW2"){
-//            atoms[i].charge = W.Hchg;
-//            atoms[i].mass   = constants::mH;
-//            assigned[i] = true;
-//         }else if(atoms[i].atomName=="MW"){
-//            atoms[i].charge = W.Mchg;
-//            atoms[i].mass   = 0.0;
-//            assigned[i] = true;
-//         }
-//      }
-//   }
-//
-//   // check again
-//   int notas=0;
-//   bool all_assigned=true;
-//   for(int i=0; i<natoms; ++i){
-//      if(!assigned[i]){
-//         all_assigned=false;
-//         printf("Error! Cannot assign charge and mass to the following atom: %d%s %s\n",
-//                 atoms[i].resNum,atoms[i].resName.c_str(),atoms[i].atomName.c_str()); 
-//         notas++;
-//      }
-//   }
-//
-//   if(!all_assigned){
-//      printf("   %d atoms were not assigned charge and mass.\n",notas);
-//      exit(EXIT_FAILURE);
-//   }
-//
-//   printf("   All atoms have been assigned charges! Printing them to atoms.info \n");
-//
-//   ofstream aout_file;
-//   aout_file.open("atoms.info");
-//   if(!aout_file.is_open()){
-//      printf(" Error! Cannot open file: atoms.info \n");
-//      exit(EXIT_FAILURE);
-//   }
-//
-//   for(int j=0; j<natoms; ++j)
-//      aout_file << atoms[j].resNum << atoms[j].resName << "\t"
-//                << atoms[j].atomName << "\t" << atoms[j].charge << "\t" 
-//                << atoms[j].mass << endl;  
-//
-//   aout_file.close();
-//
+   int notas=0;
+   bool all_assigned=true;
+   for(int i=0; i<natoms; ++i){
+      if(!assigned[i]){
+         all_assigned=false;
+         printf("Error! Cannot assign charge and mass to the following atom: %d%s %s\n",
+                 atoms[i].resNum,atoms[i].resName.c_str(),atoms[i].atomName.c_str());
+         notas++;
+      }
+   }
+
+   if(!all_assigned){
+     printf("   %d atoms were not assigned charge and mass.\n",notas);
+     exit(EXIT_FAILURE);
+   }
+   
+   printf("   All atoms have been assigned charges! Printing them to atoms.info \n");
+
+   ofstream aout_file;
+   aout_file.open("atoms.info");
+   if(!aout_file.is_open()){
+      printf(" Error! Cannot open file: atoms.info \n");
+      exit(EXIT_FAILURE);
+   }
+
+   for(int j=0; j<natoms; ++j)
+      aout_file << atoms[j].resNum << atoms[j].resName << "\t"
+                << atoms[j].atomName << "\t" << atoms[j].charge << "\t" 
+                << atoms[j].mass << endl;  
+
+   aout_file.close();
+
 }
 
 string System::exractAndTrim(const string &s, const int a, const int b)

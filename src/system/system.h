@@ -18,7 +18,7 @@ class System{
 
 public:
 
-   System(string, vector<string>);
+   System(string, vector<string>, string);
 
    int getNatoms() { return natoms; }
    const vector<AtomsRes>   getSystemData()  { return atoms; }
@@ -30,39 +30,24 @@ private:
 
    string gro_file;
    vector<string> itp_files;
+   string top_file;
 
    bool water;
 
    int natoms;
-   int nwater;
-   int atoms_in_water;
 
    vector<AtomsRes> atoms;
 
-   waterM W;
-
-   // all residue numbers (natoms)
-   //vector<int> aResN;
-   // unique residue numbers
-   //vector<int> uResN;
-   // all residue names (natoms)
-   //vector<string> aRes;
-   // unique residue names
-   //vector<string> uRes;
-   // all atom name (natoms)
-   //vector<string> aAtoms;
-   // unique atoms
-   //vector<string> uAtoms;
-   // atoms that belong to each residue name
-   //vector<vector<int>> resAtoms;
-   // starting indices for each residue
    vector<int> resStart; 
-   vector<int> wOind;
+
+   vector<string> molecules;
+   vector<int> nmol;
 
    void readItp();
    void readGro();
-   void readAtoms();
-   void common();
+   void readTop();
+   void matchRes(const vector<AtomsRes>, vector<bool> &, int);
+   void printAtomInfo(const vector<bool>);
    string exractAndTrim(const string &, const int, const int);
 
 };

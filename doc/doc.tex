@@ -219,12 +219,18 @@ OH/OD stretch transition dipole is located 0.58 \AA{} away from the water oxygen
 
 \item \textbf{xtc}: (\texttt{string}) path to gromacs *.xtc file.
 \item \textbf{gro\_file}: (\texttt{string}) path to gromacs *.gro file.
+\item \textbf{top\_file}: (\texttt{string}) path to gromacs *.top file.
 %\item \textbf{start}: (\texttt{int}) starting frame to read from the trajectory (xtc file).
 %\item \textbf{IR}: (\texttt{bool}) calculate transition dipole derivative moments for IR spectra, options: \{1,0\}.
 %\item \textbf{Raman}: (\texttt{bool}) calculate transition polarizability trajectories for Raman spectra, options: \{1,0\}.
 %\item \textbf{SFG}: (\texttt{bool}) calculate transition polarizability and transition dipole trajectories for SFG spectra, options: \{1,0\}.
-\item \textbf{nframes}: (\texttt{int}) how many frames read from *.xtc file and process.
 \item \textbf{itp\_files}: (\texttt{vector<string>}) path to GROMACS topology files (*.itp) containing residue information and charges and masses of all atoms. Provide a list of files if more than one file contains the topology info about the whole system.
+\item \textbf{nframes}: (\texttt{int}) how many frames read from *.xtc file and process.
+\item \textbf{spec\_type}: (\texttt{string}) type of calculation that will be performed. Supported types:
+\begin{itemize}
+\item Amide I spectroscopy with all amide I groups included (no isotope labels), keyword: \texttt{full}
+\item Isotope labels placed at selected residues, keyword: \texttt{iso}
+\end{itemize}
 
 \end{itemize}
 

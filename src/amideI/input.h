@@ -18,6 +18,7 @@ public:
 
   string getTrajFile()      const { return xtc_file; }
   string getGroFile()       const { return gro_file; }
+  string getTopFile()       const { return top_file; }
   string getJobType()       const { return job_type; }
   int getNFrames()          const { return nframes;  }
   bool ifIR()               const { return ir; }
@@ -37,6 +38,7 @@ private:
   string xtc_file    = "traj.xtc";
   string job_type    = "full";
   string gro_file    = "confout.gro";
+  string top_file    = "topol.top";
 
   ofstream inpfile;
 

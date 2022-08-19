@@ -25,6 +25,7 @@ public:
   int getStartFrame()       const { return startframe; }
   bool getExcHam()          const { return excHam; }
   vector<string> getItpfs() const { return itpfs; }
+  vector<string> getIsoL()  const { return isolabels; }
 
 private:
   int nframes = 1;
@@ -34,6 +35,7 @@ private:
   bool excHam = false;
 
   vector<string> itpfs;
+  vector<string> isolabels;
 
   string xtc_file    = "traj.xtc";
   string job_type    = "full";

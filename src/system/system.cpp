@@ -37,7 +37,7 @@ void System::readTop()
       printf(" ERROR: gromacs file %s cannot be read.\n",top_file.c_str());
       exit(EXIT_FAILURE);
    }
-   printf("\n** Reading GROMACS topology file %s**\n",top_file.c_str());
+   printf("\n** Reading GROMACS topology file: %s **\n",top_file.c_str());
 
    string line;
    bool recording=false;
@@ -87,7 +87,7 @@ void System::readItp()
 // read all itp files provided
 
    int nItpFiles = itp_files.size();
-   printf("\n** Reading GROMACS topology files. %d files provided.**\n",nItpFiles);
+   printf("\n** Reading GROMACS topology files. %d files provided. **\n",nItpFiles);
 
    string line, entry, substr, atom_name, mt;
    int pos; 

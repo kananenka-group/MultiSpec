@@ -20,7 +20,8 @@ using namespace std;
 class amideI{
 
 public:
-   amideI(string, string, vector<string>, string, string);
+   amideI(string, string, vector<string>, string, string,
+          vector<string>);
 
   ~amideI();
 
@@ -31,24 +32,25 @@ private:
   string gro_file;
   string traj_file;
   string top_file;
-  string spec_type;
+  string jobType;
+
+  vector<AtomsRes> atoms;
  
   vector<string> itp_files;
+  vector<string> isolabels;
+  vector<int> chrom_Clist;
+  vector<int> amideI_Clist;
 
   int namideI;
+  int nchrom;
+  int natoms;
 
   rvec *x;
   rvec box;
 
-  vector<int> aAmideI;
-  vector<int> residue_numbers;
-  vector<int> res_start_numb;
-  vector<string> atoms;
-  vector<string> residue_names;
-  vector<vector<string>> resAmideI;
-  vector<vector<int>> resNAmideI;
-
   void writeJ();
+  void findAmideI();
+  void amideIJob();
 
 };
 

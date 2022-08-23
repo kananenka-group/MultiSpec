@@ -23,6 +23,7 @@ Input::Input(int argc, char ** argv){
        // multiple values for boost option
        ("itp_files",      po::value<vector<string> >(&itpfs)->multitoken(),   "itp files (provide all of them)")
        ("top_file",       po::value<string>(&top_file),         "gromacs *.top file")
+       ("nn_map",         po::value<string>(&nn_map),           "nearest-neighbor map")
        ;
 
        po::variables_map vm;
@@ -56,6 +57,7 @@ Input::Input(int argc, char ** argv){
     inpfile << "         start = " << startframe << endl;
     inpfile << "       exc_ham = " << excHam << endl;
     inpfile << "      top_file = " << top_file << endl;
+    inpfile << "        nn_map = " << nn_map << endl;
     inpfile << "     itp_files = ";
     for(unsigned int i=0; i<itpfs.size(); ++i)
        inpfile << itpfs[i] << " ";

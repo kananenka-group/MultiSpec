@@ -22,7 +22,9 @@ int main(int argc, char ** argv){
 
    // create and run simulation
    amideI S (input.getGroFile(), input.getTrajFile(), input.getItpfs(),
-             input.getTopFile(), input.getJobType(), input.getIsoL());
+             input.getTopFile(), input.getJobType(), input.getIsoL(),
+             input.getNNmap(), input.getNFrames(), input.getStartFrame(),
+             input.ifIR());
 
    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 

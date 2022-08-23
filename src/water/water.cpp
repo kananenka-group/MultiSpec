@@ -330,7 +330,7 @@ void water::readGro(){
    }
 
    printf("   Atoms found: ");
-   for(unsigned int ii=0; ii<uAtoms.size(); ++ii)
+   for(uint ii=0; ii<uAtoms.size(); ++ii)
       printf(" %s ",uAtoms[ii].c_str());
    printf("\n");
 
@@ -416,12 +416,12 @@ void water::readCharges()
         strs.push_back(buf);
 
       // assign charges and masses
-      for(unsigned int ii=0; ii<uAtoms.size(); ++ii){
+      for(uint ii=0; ii<uAtoms.size(); ++ii){
          if(strs[0]==uAtoms[ii]){
             if(strs.size() != 3){
                printf("Error! Wrong line for atom %s in %s. Expecting both charge and mass. \n",uAtoms[ii].c_str(),ams_file.c_str());
                printf(" Expecting : <atom> <charge> <mass>. Got \n");
-               for(unsigned int ij=0; ij<strs.size(); ++ij)
+               for(uint ij=0; ij<strs.size(); ++ij)
                   printf(" %s ",strs[ij].c_str());
                printf("\n");
                exit(EXIT_FAILURE);
@@ -434,12 +434,12 @@ void water::readCharges()
    }
 
    printf("   Charges found and assigned: ");
-   for(unsigned int ii=0; ii<uAtoms.size(); ++ii)
+   for(uint ii=0; ii<uAtoms.size(); ++ii)
       printf(" %s (%5.3f) ",uAtoms[ii].c_str(),uChg[ii]);
    printf("\n");
 
    printf("   Masses found and assigned: ");
-   for(unsigned int ii=0; ii<uAtoms.size(); ++ii)
+   for(uint ii=0; ii<uAtoms.size(); ++ii)
       printf(" %s (%5.3f) ",uAtoms[ii].c_str(),uMas[ii]);
    printf("\n");
 
@@ -447,7 +447,7 @@ void water::readCharges()
    aMas.resize(natoms);
    
    for(int ii=0; ii<natoms; ++ii)
-      for(unsigned int jj=0; jj<uAtoms.size(); ++jj)
+      for(uint jj=0; jj<uAtoms.size(); ++jj)
          if(aAtoms[ii]==uAtoms[jj]){
             aChg[ii] = uChg[jj];
             aMas[ii] = uMas[jj];
@@ -954,7 +954,7 @@ void water::moveMsite()
 
 void water::freqDist()
 {
-   unsigned int t;
+   uint t;
 //
 // Diagonal frequencies
 //

@@ -65,7 +65,7 @@ build/
 *.inp
 
 #cmake-related files
-*.txt
+CMakeCache.txt
 Makefile
 cmake_install.cmake
 CMakeFiles/

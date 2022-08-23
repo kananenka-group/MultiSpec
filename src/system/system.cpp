@@ -21,7 +21,7 @@ System::System(string gro_file, vector<string> itp_files, string top_file)
 
    // determine starting indices for each residue
    resStart.push_back(0);
-   for(unsigned int ii=0; ii<atoms.size()-1; ++ii) 
+   for(uint ii=0; ii<atoms.size()-1; ++ii) 
       if(atoms[ii].resNum != atoms[ii+1].resNum)
          resStart.push_back(ii+1);
 }
@@ -77,7 +77,7 @@ void System::readTop()
    topfile.close();  
 
    printf("   Found the following ``molecules'':\n   ");
-   for(unsigned int n=0; n<molecules.size();++n)
+   for(uint n=0; n<molecules.size();++n)
       printf("%s(%d) ",molecules[n].c_str(),nmol[n]);
    printf("\n");
 }
@@ -160,7 +160,7 @@ void System::readItp()
          }
 
          // try to understand what we are dealing with here
-         for(unsigned int m=0; m<molecules.size(); ++m)
+         for(uint m=0; m<molecules.size(); ++m)
             if(mt.compare(molecules[m])==0){
                n_this_res = nmol[m];
                continue;

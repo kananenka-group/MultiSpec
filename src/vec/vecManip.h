@@ -87,4 +87,9 @@ inline void unitv(rvec &v){
    multRvec(v, d1);
 }
 
+inline void normalize(rvec &v){
+   float norm = dist(v);
+   multRvec(v, 1.0/norm);
+}
+
 #endif

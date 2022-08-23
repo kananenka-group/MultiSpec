@@ -1,6 +1,7 @@
 #ifndef INPUT_H
 #define INPUT_H
 
+#include <iostream>
 #include <sstream>
 #include <fstream>
 #include <string>
@@ -26,6 +27,7 @@ public:
   bool getExcHam()          const { return excHam; }
   vector<string> getItpfs() const { return itpfs; }
   vector<string> getIsoL()  const { return isolabels; }
+  string getNNmap()         const { return nn_map; }
 
 private:
   int nframes = 1;
@@ -41,6 +43,7 @@ private:
   string job_type    = "full";
   string gro_file    = "confout.gro";
   string top_file    = "topol.top";
+  string nn_map      = "jensen_2006";
 
   ofstream inpfile;
 

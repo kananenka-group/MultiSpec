@@ -28,6 +28,7 @@ public:
   vector<string> getItpfs() const { return itpfs; }
   vector<string> getIsoL()  const { return isolabels; }
   string getNNmap()         const { return nn_map; }
+  float getIsoShift()       const { return isoShift; }
 
 private:
   int nframes = 1;
@@ -35,6 +36,10 @@ private:
 
   bool ir    = false; 
   bool excHam = false;
+
+  // 13C=18O isotope shift in cm-1
+  // taken from JACS, 134, 19118-19128 (2012)
+  float isoShift = -66.0;
 
   vector<string> itpfs;
   vector<string> isolabels;

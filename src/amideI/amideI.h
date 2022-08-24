@@ -23,7 +23,7 @@ class amideI{
 
 public:
    amideI(string, string, vector<string>, string, string,
-          vector<string>, string, int, int, bool);
+          vector<string>, string, int, int, bool, float);
 
   ~amideI();
 
@@ -49,6 +49,8 @@ private:
   int startframe=1;
 
   bool ir;
+
+  float isoShift;
 
   ofstream houtfile;
   ofstream doutfile;
@@ -77,6 +79,7 @@ private:
   void findAmideI();
   void amideIJob();
   void nnfs();
+  void updateEx();
   void CalcSQuant();
   void calcAngles(const int , const int , const rvec *, float &, float &);
   float calcDihedral(const rvec &, const rvec &,

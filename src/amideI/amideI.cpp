@@ -2,10 +2,12 @@
 
 amideI::amideI(string gro_file, string traj_file, vector<string> itp_files,
                string top_file, string spec_type, vector<string> isolabels,
-               string nn_map_name, int nframes, int startframe, bool ir) :
+               string nn_map_name, int nframes, int startframe, bool ir,
+               float isoShift) :
                s(gro_file, itp_files, top_file), traj_file(traj_file), 
                jobType(spec_type), isolabels(isolabels), map_nn(nn_map_name),
-               nframes(nframes), startframe(startframe), ir(ir)
+               nframes(nframes), startframe(startframe), ir(ir), 
+               isoShift(isoShift)
 {
 //
 // At this point all molecular information has been processed.
@@ -73,8 +75,8 @@ amideI::amideI(string gro_file, string traj_file, vector<string> itp_files,
          x = traj.getCoords();
          traj.getBox(box);
          nnfs();
-     
-
+          
+         updateEx();
       }
    }
 
@@ -203,6 +205,7 @@ void amideI::amideIJob(){
    printf("\n** Reading job type **\n");
    if(jobType=="full"){
       printf("   All peptide groups will be used to calculate spectra.\n");
+      isoShift = 0.0;
       //nchrom = namideI;
       chrom_Clist.assign(amideI_Clist.begin(), amideI_Clist.end());
    }else if(jobType=="iso"){
@@ -229,6 +232,7 @@ void amideI::amideIJob(){
          printf("   %s (%d)  \n",isolabels[j].c_str(), nchroma);
       }
       printf("   Total %d C=O groups are labeled.\n",nchroma); //chrom_Clist.size());
+      printf("   Isotope frequency shift: %7.4f \n",isoShift);
    }else{
      printf(" Error! Type of spectrum to calculate is not recognized: %s. \n ",jobType.c_str());
      exit(EXIT_FAILURE);
@@ -365,4 +369,13 @@ float amideI::calc_C_NN_shift(const int thisC, const int thisRes, const rvec *x)
    return map_nn.getNNshift(phi,psi,"Cterm");
 }
 
+void amideI::updateEx()
+{
+// build excitonic Hamiltonian here
+   fill_n(hf.begin(), nchrom2, 0.0);
+// 1. Diagonal part   
+   for(int ii=0; ii<nchrom; ++ii)
+      hf[ii*nchrom+ii] = diag_w_nn[ii] + isoShift;
+
+}
 

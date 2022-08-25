@@ -24,8 +24,8 @@ int main(int argc, char ** argv){
    water S (input.getWaterModel(), input.getwSMap(), input.getwBMap(),
             input.getJobType(), input.getTrajFile(), input.getGroFile(),
             input.getAmsFile(), input.getNFrames(), input.getND2O(),
-            input.getStartFrame(), input.ifIR(), input.ifRaman(), 
-            input.ifSFG(), input.ifDODv(), input.getExcHam(),
+            input.getStartFrame(), input.ifIR(), 
+            input.ifRaman(), input.ifSFG(), input.ifDODv(), input.getExcHam(),
             input.getIntraC(), input.getInermcs(), input.getTDSFG(), 
             input.getFc());
 

@@ -2,15 +2,15 @@
 
 water::water(string wm_name, string wS_wmap_name, string wB_map_name, 
              string job_type, string traj_file_name, string gro_file_name, 
-             string atoms_file_name, int nfr, int d2o,  int nst, bool doir, 
-             bool doraman, bool dosfg, bool doDoDov, bool eHp, bool intrac, 
+             string atoms_file_name, int nfr, int d2o,  int nst, 
+             bool doir, bool doraman, bool dosfg, bool doDoDov, bool eHp, bool intrac, 
              bool intermc_OHs, float trdip_for_SFG, float fermi_c) : 
              water_model_name_inp(wm_name), jobType(job_type), 
              traj_file(traj_file_name), gro_file(gro_file_name), 
              ams_file(atoms_file_name), wms(wS_wmap_name, job_type, intrac), 
              wmb(wB_map_name, job_type), nframes(nfr), nd2o(d2o), startframe(nst),
-             ir(doir), raman(doraman), sfg(dosfg), DoDv(doDoDov), printHam(eHp),
-             intermcs(intermc_OHs), tdSFG(trdip_for_SFG), fc(fermi_c)
+             ir(doir), raman(doraman), sfg(dosfg), DoDv(doDoDov), 
+             printHam(eHp), intermcs(intermc_OHs), tdSFG(trdip_for_SFG), fc(fermi_c)
 {
    // removing old files
    vector<string> files_to_remove;
@@ -241,6 +241,7 @@ void water::waterJob(){
       nchroms = 2*nwater;
       offs = 2;
       printf("   Job Type: Mixed H2O/D2O simulation, %d chromophores.\n",nchroms);
+      //printf("   Seed for random number generator : %d\n",seed);
       IsoMix();
    }else if(jobType=="wswbH2O"){
       wf = true;
@@ -248,23 +249,24 @@ void water::waterJob(){
       nchromb = nwater;
       offs = 3;
       printf("   Job Type: pure H2O stretch fundamental-bend overtone simulation.\n"); 
-      printf("             %d OH chromophores, %d HOH chromophores \n",nchroms,nchromb);
-      printf("             Fermi coupling = %7.2f [cm-1] \n",fc);
+      printf("   %d OH chromophores, %d HOH chromophores \n",nchroms,nchromb);
+      printf("   Fermi coupling = %7.2f [cm-1] \n",fc);
    }else if(jobType=="wswbD2O"){
       wf = true;
       nchroms = 2*nwater;
       nchromb = nwater;
       offs = 3;
       printf("   Job Type: pure D2O stretch fundamental-bend overtone simulation.\n");
-      printf("             %d OD chromophores, %d DOD chromophores \n",nchroms,nchromb);
-      printf("             Fermi coupling = %7.2f [cm-1] \n",fc);
+      printf("   %d OD chromophores, %d DOD chromophores \n",nchroms,nchromb);
+      printf("   Fermi coupling = %7.2f [cm-1] \n",fc);
    }else if(jobType=="wswbiso"){
       wf = true;
       nchroms = 2*nwater;
       nchromb = nwater;
       offs = 3;
       printf("   Job Type: Mixed H2O/D2O stretch fundamental-bend overtone simulation.\n");
-      printf("             Fermi coupling = %7.2f [cm-1] \n",fc);
+      //printf("   Seed for random number generator : %d\n",seed);
+      printf("   Fermi coupling = %7.2f [cm-1] \n",fc);
       IsoMix();
    }else{
       printf(" Error! Type of spectrum to calculate is not recognized: %s. \n ",jobType.c_str());
@@ -529,8 +531,11 @@ void water::IsoMix()
    vector<int> ovt(oxyInd.size()); 
    iota(ovt.begin(), ovt.end(), 0);
 
-   random_device rd;
+   random_device rd; 
+   mt19937 rng(rd());
+
    shuffle(ovt.begin(), ovt.end(), rd);
+   //shuffle(ovt.begin(), ovt.end(), rng);
 
    // assign water molecules to H2O, D2O, and HOD
    mH2O.reserve(nh2o);
@@ -547,7 +552,6 @@ void water::IsoMix()
       mHOD.push_back(ovt[ii]);
 
    // for HOD we need to decide which hydroxyl is OH and which is OD
-   mt19937 rng(rd());
    uniform_int_distribution<int> uni(1,2);
 
    for(int ii=0; ii<nhod; ++ii)

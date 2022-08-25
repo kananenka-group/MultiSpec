@@ -39,6 +39,7 @@ private:
   int nframes;
   int nd2o = 0;
   int startframe = 1;
+  //int seed = 23295;
   
   bool ir;
   bool raman;

@@ -59,7 +59,7 @@ private:
   vector<float> hf;
   vector<float> tdmuf;
   vector<float> diag_w_nn;
-  vector<float> diag_w_e;
+  vector<float> diag_w_el;
   //vector<float> phi;
   //vector<float> psi;
 
@@ -79,6 +79,7 @@ private:
   void findAmideI();
   void amideIJob();
   void nnfs();
+  void elst();
   void updateEx();
   void CalcSQuant();
   void calcAngles(const int , const int , const rvec *, float &, float &);

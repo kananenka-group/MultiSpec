@@ -40,7 +40,7 @@ amideI::amideI(string gro_file, string traj_file, vector<string> itp_files,
    // allocate memory
    hf.resize(nchrom2,0.0);
    diag_w_nn.resize(nchrom,0.0);
-   diag_w_e.resize(nchrom,0.0);
+   diag_w_el.resize(nchrom,0.0);
    tdmuf.resize(nchrom*3,0.0);
 
    // open output files
@@ -75,6 +75,7 @@ amideI::amideI(string gro_file, string traj_file, vector<string> itp_files,
          x = traj.getCoords();
          traj.getBox(box);
          nnfs();
+         elst();
           
          updateEx();
       }
@@ -83,6 +84,19 @@ amideI::amideI(string gro_file, string traj_file, vector<string> itp_files,
 }
 
 amideI::~amideI() { }
+
+void amideI::elst()
+{
+// 
+   int thisC;
+
+   fill_n(diag_w_el.begin(), nchrom, 0.0);
+
+   for(int i=0; i<nchrom; ++i){
+      thisC = chrom_Clist[i];
+      // get exclude list for this carbon
+   }
+}
 
 void amideI::nnfs()
 {
@@ -105,7 +119,6 @@ void amideI::nnfs()
       diag_w_nn[i] += calc_C_NN_shift(thisC,thisRes,x);
       cout << " diagonal shift " << diag_w_nn[i] << endl;
    }
-   exit(0);
 
 }
 
@@ -375,7 +388,7 @@ void amideI::updateEx()
    fill_n(hf.begin(), nchrom2, 0.0);
 // 1. Diagonal part   
    for(int ii=0; ii<nchrom; ++ii)
-      hf[ii*nchrom+ii] = diag_w_nn[ii] + isoShift;
+      hf[ii*nchrom+ii] = diag_w_nn[ii] + diag_w_el[ii] + isoShift;
 
 }
 

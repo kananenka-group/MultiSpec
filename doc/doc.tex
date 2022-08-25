@@ -34,7 +34,7 @@ $ cmake -S . -B build
 $ cmake --build build
 \end{verbatim}
 
-Note that MultiSpec uses Boost and Blas, both are needed to be installed before attempting to install MultiSpec.
+Note that MultiSpec uses Boost and BLAS, both are needed to be installed before attempting to install MultiSpec.
 
 \section{Exciton module}
 Exciton module is the main module that computes spectra. Currently only linear IR and Raman spectra are implemented.
@@ -61,6 +61,11 @@ calculation of distribution of excitonic frequencies.
 
 \end{itemize}
 
+%%%%%%%%%
+%
+% water
+%
+%%%%%%%%%%%
 \section{Water module}
 Water module generates an input for the exciton module. The input consists of excitonic hamiltonian trajectory as well as 
 transition dipole and transition polarizability trajectories for IR, Raman, and SFG calculations.
@@ -111,6 +116,9 @@ and  \texttt{--spec\_type=wswbiso}.
 \item \textbf{Fc}: (\texttt{float}) OH-stretch fundamental-HOH bend overtone Fermi coupling. This is  required only for \texttt{--spec\_type=wswbH2O},
 \texttt{--spec\_type=wswbD2O}, and \texttt{--spec\_type=wswbiso}.
 
+\item \textbf{seed}: (\texttt{int}) seed for random number generated. This is needed for all spec types that involve isotope mixtures for
+randomly choosing water molecules to designate as D$_2$O, H$_2$O, and HOD.
+
 \item \textbf{DOD\_overtone}: (\texttt{bool}) use this option to turn on/off DOD bend overtone in water hydroxyl stretch fundamental/bend overtone
 calculations of isotope mixtures. This option only works with \texttt{--spec\_type=wswbiso}.
 
@@ -127,7 +135,7 @@ separate files. Options: \{1,0\}. Default value is 0.
 
 \end{itemize}
 
-\subsection{\label{sec:wmaps} Water Spectroscopic maps}
+\subsection{\label{sec:wmaps}Water Spectroscopic maps}
 \subsubsection{gruenbaum\_2013\_tip4p}
 These maps were developed by Gruenbaum et al. in \href{https://pubs.acs.org/doi/10.1021/ct400292q}{J. Chem. Theory Comput. 9, 3109 (2013)} based on clusters
 of water molecules from a liquid-state simulation of TIP4P water. Note that some of the maps shown below have been

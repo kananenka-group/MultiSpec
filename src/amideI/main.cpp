@@ -24,7 +24,7 @@ int main(int argc, char ** argv){
    amideI S (input.getGroFile(), input.getTrajFile(), input.getItpfs(),
              input.getTopFile(), input.getJobType(), input.getIsoL(),
              input.getNNmap(), input.getNFrames(), input.getStartFrame(),
-             input.ifIR());
+             input.ifIR(), input.getIsoShift());
 
    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 

@@ -36,13 +36,11 @@ public:
   float getTDSFG()       const { return trdipSFG; }
   int getStartFrame()    const { return startframe; }
   bool getExcHam()       const { return excHam; }
-  int  getSeed()         const { return seed; }
 
 private:
   int nframes = 1;
   int nd2o = 0;
   int startframe = 1;
-  int seed = 253456;
 
   bool ir    = false; 
   bool raman = false; 

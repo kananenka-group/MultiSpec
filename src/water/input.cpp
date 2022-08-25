@@ -30,7 +30,6 @@ Input::Input(int argc, char ** argv){
        ("intercOH",    po::value<bool>(&intercs),      "OH stretch intermolecular coupling")
        ("start",       po::value<int>(&startframe),    "starting frame to read from xtc file")
        ("exc_ham",     po::value<bool>(&excHam),       "print diagonal frequencies, inter- and intramolecular couplings")
-       ("seed",        po::value<int>(&seed),          "seed for random number generator")
        ;
 
        po::variables_map vm;
@@ -79,7 +78,6 @@ Input::Input(int argc, char ** argv){
     inpfile << "     intercOH = " << intercs << endl;
     inpfile << "        start = " << startframe << endl;
     inpfile << "      exc_ham = " << excHam << endl;
-    inpfile << "         seed = " << seed << endl;
     inpfile.close();
 
 }

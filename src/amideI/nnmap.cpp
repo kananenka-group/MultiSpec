@@ -8,9 +8,9 @@ NNmap::NNmap(string map_name) :
    printf("\n** Reading Nearest-Neighbor Map. **\n");
 
    if(map_name=="Jansen_2006"){
-       printf("   Using Nearest-Neighbor map from Jansen et al. J. Chem. Phys. 125, 044312 (2006).\n");
+       printf("   Using Nearest-Neighbor map from : Jansen et al. J. Chem. Phys. 125, 044312 (2006).\n");
        // NN frequency shifts, copied from Jansen's AmideImap program
-       // this look a lot like Torii map, see 
+       // see Supporting info for the paper above.
        NtermShift ={ 0.404,-1.205, 0.789,13.541,22.541,28.548,50.551,28.548,22.541,13.541, 0.789,-1.205, 0.404,
                     -1.887,-1.141, 5.762,14.643,24.000,34.820,24.308,17.676,13.092, 4.738,-2.997,-2.603,-1.887,
                     -3.387,-0.124, 9.386,14.208,22.015,30.925,14.221,11.718, 4.889, 1.667,-3.653,-4.087,-3.387,

@@ -85,17 +85,174 @@ amideI::amideI(string gro_file, string traj_file, vector<string> itp_files,
 
 amideI::~amideI() { }
 
+vector<int> amideI::get_excludes(int cid)
+{
+   vector<int> excl;
+   int thisO, thisN, thisCa, thisH;
+   int nextO, nextC, nextN, nextCa, nextH;
+   int prevO, prevC, prevN, prevCa, prevH;
+
+   // Exclude this peptide group and Ca atom of the residue
+   // C
+   excl.push_back(cid);
+   // O
+   thisO = search2(cid, atoms[cid].resNum+1, "O", 0);
+   if(thisO>0)
+      excl.push_back(thisO);
+   // N 
+   thisN = search2(cid, atoms[cid].resNum+1, "N", 1);
+   if(thisN>0)
+      excl.push_back(thisN);
+   // H
+   thisH = search2(cid, atoms[cid].resNum+1, "H", 1);
+   if(thisH>0)
+      excl.push_back(thisH);
+   // Ca
+   thisCa = search2(cid, atoms[cid].resNum, "CA", 0);
+   if(thisCa>0)
+      excl.push_back(thisCa);
+
+   // exclude NN peptide group
+   nextO = search2(cid, atoms[cid].resNum+1, "O", 1);
+   if(nextO>0)
+     excl.push_back(nextO);
+   
+   // check if all these atoms are found 
+   // at the same time only that way we can be sure it
+   // is a backbone group of compare "C" index with 
+   // "C" atoms in amideI_list
+   nextC = search2(cid, atoms[cid].resNum+1, "C", 1);
+   if(nextC>0)
+     excl.push_back(nextC);
+
+   nextN = search2(cid, atoms[cid].resNum+1, "N", 2);
+   if(nextN>0)
+     excl.push_back(nextN);
+
+   nextCa = search2(cid, atoms[cid].resNum+1, "CA", 1);
+   if(nextCa>0)
+     excl.push_back(nextCa);
+  
+   nextH = search2(cid, atoms[cid].resNum+1, "H", 2);
+   if(nextH>0)
+     excl.push_back(nextH);
+
+   // check the other neighbor
+   prevO = search2(cid, atoms[cid].resNum, "O", 1);
+   if(prevO>0)
+     excl.push_back(prevO);
+
+   prevC = search2(cid, atoms[cid].resNum, "C", 1);
+   if(prevC>0)
+     excl.push_back(prevC);
+
+   prevN = search2(cid, atoms[cid].resNum, "N", 0);
+   if(prevN>0)
+      excl.push_back(prevN);
+
+   prevCa = search2(cid, atoms[cid].resNum, "CA", 1);
+   if(prevCa>0)
+      excl.push_back(prevCa);
+
+   prevH = search2(cid, atoms[cid].resNum, "H", 0);
+   if(prevH>0)
+      excl.push_back(prevH);
+
+   //for(uint i=0; i<excl.size(); ++i)
+   //   cout << excl[i] << endl;
+   //exit(0);
+
+   return excl;
+}
+
 void amideI::elst()
 {
 // 
-   int thisC;
+   int thisC, thisN;
+   vector<int> this_exclude;
+
+   rvec tmpEn, tmpEc;
+   rvec Cxyz, Nxyz, tmpvec;
+
+   float dc, dn, dj;
 
    fill_n(diag_w_el.begin(), nchrom, 0.0);
 
+   // loop over all chromophores
    for(int i=0; i<nchrom; ++i){
       thisC = chrom_Clist[i];
-      // get exclude list for this carbon
+      thisN = search2(thisC, atoms[thisC].resNum+1, "N", 1);
+      
+      this_exclude = get_excludes(thisC);
+      // first pass; save excluded backbone atoms
+      if(!save)
+         exclude_list.push_back(this_exclude);
+
+      setRvec(tmpEn,0.0);
+      setRvec(tmpEc,0.0);      
+      copyRvec(x[thisC],Cxyz);
+      copyRvec(x[thisN],Nxyz);
+      // loop over all atoms
+      for(int j=0; j<natoms; ++j){
+         // check if this atom belong to exclude list
+         if(find(exclude_list[i].begin(), exclude_list[i].end(), j)!=exclude_list[i].end())
+           continue; 
+
+         // calc to dist to C atom
+         addRvec(Cxyz, x[j], tmpvec, -1.0);
+         pbc(tmpvec,box);
+         dc = dist(tmpvec);
+         
+         // calc dist to N atom
+         addRvec(Nxyz, x[j], tmpvec, -1.0);
+         pbc(tmpvec,box);
+         dn = dist(tmpvec);
+
+         if(dc < constants::CN_dist_cutoff && dn < constants::CN_dist_cutoff){
+            // atom j is within a cut-off distance to C and N
+            if(atoms[j].charge){
+               // calc Ec
+               addRvec(Cxyz, x[j], tmpvec, -1);
+               pbc(tmpvec,box);
+               dj = dist(tmpvec);
+               multRvec(tmpvec, atoms[j].charge/(dj*dj*dj));
+               addRvec(tmpvec, tmpEc, 1);
+
+               // calc En
+               addRvec(Nxyz, x[j], tmpvec, -1);
+               pbc(tmpvec,box);
+               dj = dist(tmpvec);
+               multRvec(tmpvec, atoms[j].charge/(dj*dj*dj));
+               addRvec(tmpvec, tmpEn, 1);
+            }
+         }else if(dc < constants::CN_dist_cutoff){
+            // just C atom is within a cut-off
+            if(atoms[j].charge){
+               // calc Ec
+               addRvec(Cxyz, x[j], tmpvec, -1);
+               pbc(tmpvec,box);
+               dj = dist(tmpvec);
+               multRvec(tmpvec, atoms[j].charge/(dj*dj*dj));
+               addRvec(tmpvec, tmpEc, 1);
+            }
+         }else if(dn < constants::CN_dist_cutoff){
+            // just N atom is within a cut-off
+            if(atoms[j].charge){
+               // calc En
+               addRvec(Nxyz, x[j], tmpvec, -1);
+               pbc(tmpvec,box);
+               dj = dist(tmpvec);
+               multRvec(tmpvec, atoms[j].charge/(dj*dj*dj));
+               addRvec(tmpvec, tmpEn, 1);
+            }
+         }
+      }
+      // calc frequency
+      //diag_w_el[i] = elst_map.getw01(dot(tmpEc, vecCO), dot(tmpEn, vecCO));
    }
+
+   save = true;
+   exit(0);
 }
 
 void amideI::nnfs()

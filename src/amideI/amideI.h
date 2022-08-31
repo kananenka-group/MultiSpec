@@ -60,6 +60,9 @@ private:
   vector<float> tdmuf;
   vector<float> diag_w_nn;
   vector<float> diag_w_el;
+
+  vector<vector<int> > exclude_list;
+ 
   //vector<float> phi;
   //vector<float> psi;
 
@@ -71,6 +74,7 @@ private:
   int natoms;
 
   bool amdsiso = false;
+  bool save = false;
 
   rvec *x;
   rvec box;
@@ -82,6 +86,7 @@ private:
   void elst();
   void updateEx();
   void CalcSQuant();
+  vector<int> get_excludes(int );
   void calcAngles(const int , const int , const rvec *, float &, float &);
   float calcDihedral(const rvec &, const rvec &,
                      const rvec &, const rvec &);

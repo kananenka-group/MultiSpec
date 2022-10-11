@@ -26,7 +26,7 @@ class amideI{
 public:
    amideI(string, string, string, vector<string>, string, string,
           vector<string>, string, string, string, int, int, 
-          bool, float);
+          bool, bool, float);
 
   ~amideI();
 
@@ -55,6 +55,7 @@ private:
   int startframe=1;
 
   bool ir;
+  bool printH;
 
   float isoShift;
 
@@ -66,6 +67,9 @@ private:
   vector<float> tdmuf;
   vector<float> diag_w_nn;
   vector<float> diag_w_el;
+
+  vector<float> omegas;
+  vector<float> w_inter;
 
   vector<int> chgSt;
   vector<int> grpInd;
@@ -92,6 +96,9 @@ private:
   rvec *x;
   rvec box;
 
+  string w_dist_fname =  "w_diag.dat";
+  string w_inter_fname = "w_inter.dat";
+
   void writeJ();
   void writeH();
   void writeD();
@@ -112,6 +119,7 @@ private:
   float calc_N_NN_CS(const int , const int , const rvec *, int);
   float calc_C_NN_CS(const int , const int , const rvec *, int);
   void getCCG(); 
+  void freqDist();
 
 };
 

@@ -28,6 +28,7 @@ Input::Input(int argc, char ** argv){
        ("el_map",         po::value<string>(&el_map),           "electrostatic backbone map")
        ("isotope_shift",  po::value<float>(&isoShift),          "isotope frequency shift")
        ("residues_maps",  po::value<string>(&res_map_file),     "file containing maps for specific residues")
+       ("exc_ham",        po::value<bool>(&excHam),       "print diagonal frequencies, inter- and intramolecular couplings")
        //("cut_off_elst",   po::value<string>(&cutoffelst),       "cut-off for calculating electrostatics")
        ;
 

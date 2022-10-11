@@ -4,12 +4,12 @@ amideI::amideI(string gro_file, string traj_file, string mapsFile,
                vector<string> itp_files,
                string top_file, string spec_type, vector<string> isolabels,
                string nn_map_name, string nnc_map_name, string el_map_name, 
-               int nframes, int startframe, bool ir, float isoShift) :
+               int nframes, int startframe, bool ir, bool eHp, float isoShift) :
                s(gro_file, itp_files, top_file), traj_file(traj_file), 
                jobType(spec_type), isolabels(isolabels),
                map_nn(nn_map_name), map_nnc(nnc_map_name), 
                map_el(el_map_name,mapsFile), nframes(nframes), 
-               startframe(startframe), ir(ir), isoShift(isoShift)
+               startframe(startframe), ir(ir), printH(eHp), isoShift(isoShift)
 {
 //
 // At this point all molecular information has been processed.
@@ -101,6 +101,9 @@ amideI::amideI(string gro_file, string traj_file, string mapsFile,
    // write out files.
    writeJ();
 
+   if(printH)
+      freqDist();
+
 }
 
 void amideI::getCCG()
@@ -169,6 +172,7 @@ void amideI::couplings()
          }
          hf[i*nchrom+j] = tmpcoup;
          hf[j*nchrom+i] = tmpcoup;
+         w_inter.push_back(tmpcoup);
       }
    }
 
@@ -615,6 +619,7 @@ void amideI::nnfs()
       thisRes = atoms[thisC].resNum;
       diag_w_nn[i]  = calc_N_NN_CS(thisC,thisRes,x,1);
       diag_w_nn[i] += calc_C_NN_CS(thisC,thisRes,x,1);
+      omegas.push_back(diag_w_nn[i]);
    }
 
 }
@@ -929,4 +934,36 @@ void amideI::writeD()
   //cout << endl;
 }
 
+void amideI::freqDist()
+{
+   uint t;
 
+   ofstream w_dist_file;
+   w_dist_file.open(w_dist_fname);
+   if(!w_dist_file.is_open()){
+      printf(" Error! Cannot open file: %s \n",w_dist_fname.c_str());
+      exit(EXIT_FAILURE);
+   }
+
+   printf("   Writing diagonal frequencies into %s \n",w_dist_fname.c_str());
+   for(t=0; t<omegas.size(); ++t)
+      w_dist_file << omegas[t] << endl;
+
+   w_dist_file.close();
+//
+// intermolecular couplings
+//
+   ofstream w_inter_file;
+   w_inter_file.open(w_inter_fname);
+   if(!w_inter_file.is_open()){
+      printf(" Error! Cannot open file: %s \n",w_inter_fname.c_str());
+      exit(EXIT_FAILURE);
+   }
+
+   printf("   Writing intermolecular couplings [in cm-1] into %s \n",w_inter_fname.c_str());
+   for(t=0; t<w_inter.size(); ++t)
+      w_inter_file << w_inter[t] << endl;
+
+   w_inter_file.close();
+   
+}

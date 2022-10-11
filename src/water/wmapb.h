@@ -8,6 +8,7 @@
 #include <functional>
 #include "mapsTb.h"
 #include "../vec/vecManip.h"
+#include "../util/util.h"
 
 using namespace std;
 
@@ -30,6 +31,8 @@ public:
 private:
 
   eFmapB emap; 
+  string map_name;
+  string map_name_inp;
   string ctype;
 
 };

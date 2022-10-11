@@ -2,12 +2,13 @@
 
 using namespace std;
 
-WmapS::WmapS(string map_name, string chrom_type, bool intramolOHc) :
-             ctype(chrom_type), intrac(intramolOHc)
+WmapS::WmapS(string map_name_inp, string chrom_type, bool intramolOHc) :
+             map_name_inp(map_name_inp), ctype(chrom_type), intrac(intramolOHc)
 {
    printf("\n** Reading Stretch Map **\n");
+   map_name = str_toupper(map_name_inp);
 
-   if(map_name=="li_2010_tip4p"){
+   if(map_name=="LI_2010_TIP4P"){
       printf("   Using hydroxyl stretch map from : F. Li and J. L. Skinner, J. Chem. Phys. 132, 244504 (2010)\n");
       printf("   Note! This map can only describe 0->1 transitions.\n");
       emap = {3732.90, -3519.8, -153520.0, 
@@ -27,7 +28,7 @@ WmapS::WmapS(string map_name, string chrom_type, bool intramolOHc) :
               0.0, 0.0, 0.0,
               0.0, 0.0, 0.0,
              -1361.0, 27165.0, -1.887};
-   }else if(map_name=="gruenbaum_2013_tip4p"){
+   }else if(map_name=="GRUENBAUM_2013_TIP4P"){
       printf("   Using hydroxyl stretch map from : S. M. Gruenbaum et al., J. Chem. Theory Comput. 9, 3109 (2013)\n");
       emap = {3760.2,  -3541.7,     -152677.0,
               0.19285, -1.7261e-5,   0.0,
@@ -46,7 +47,7 @@ WmapS::WmapS(string map_name, string chrom_type, bool intramolOHc) :
               2.6233,   13.1443e-4,  0.0,
               0.1646,   11.39,       63.41,
              -1361.0,   27165.0,    -1.887}; 
-   }else if(map_name=="auer_2008_spce"){
+   }else if(map_name=="AUER_2008_SPCE"){
       printf("   Using hydroxyl stretch map from : B. M. Auer et al., J. Chem. Phys. 128, 224511 (2008)\n");
       emap = {3762.0,  -5060.0,    -86225.0,
               0.1934,  -1.75e-5,    0.0,

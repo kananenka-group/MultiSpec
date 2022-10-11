@@ -2,12 +2,14 @@
 
 using namespace std;
 
-WmapB::WmapB(string map_name, string chrom_type) :
-             ctype(chrom_type)
+WmapB::WmapB(string map_name_inp, string chrom_type) :
+             map_name_inp(map_name_inp), ctype(chrom_type)
 {
+   map_name = str_toupper(map_name_inp);
+
    if((ctype=="wswbH2O") || (ctype=="wswbD2O") || (ctype=="wswbiso")){
       printf("\n** Reading Bend Map **\n");
-      if(map_name=="ni_2015_tip4p"){
+      if(map_name=="NI_2015_TIP4P"){
          printf("   Using bending map from : Y. Ni and J. L. Skinner, J. Chem. Phys. 143, 014502 (2015)\n");
          emap = {1581.46, 2938.51,
                  1551.32, 3147.80,
@@ -27,7 +29,7 @@ WmapB::WmapB(string map_name, string chrom_type) :
                  0.0, 0.0,
                  0.0,
                  0.0, 0.0, 0.0};
-      }else if(map_name=="ni_2015_kananenka_2019_tip4p"){
+      }else if(map_name=="NI_2015_KANANENKA_2019_TIP4P"){
          printf("   Using bending map from : Y. Ni and J. L. Skinner, J. Chem. Phys. 143, 014502 (2015)\n");
          printf("   updated with D2O and HOD bending frequencies taken from J. Phys. Chem. B 117, 15319 (2013)\n");
          printf("   and used in J. Phys. Chem. B 123, 5139-5146 (2019).\n");

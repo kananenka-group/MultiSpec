@@ -10,8 +10,8 @@ void printv()
    printf("*        MultiSpec: a Package for Simulating Vibrational Spectra        *\n");
    printf("*                       of Condensed-phase Systems                      *\n");
    printf("*                                                                       *\n");
-   printf("*                              Version 2.0                              *\n");
-   printf("*                              August 2022                              *\n");
+   printf("*                              Version 3.0                              *\n");
+   printf("*                             October  2022                             *\n");
    printf("*              http://github.com/kananenka-group/MultiSpec              *\n");
    printf("*                                                                       *\n");
    printf("*             Copyright (c) 2021 - 2022 Alexei A. Kananenka             *\n");

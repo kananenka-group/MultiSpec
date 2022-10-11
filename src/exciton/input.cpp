@@ -25,9 +25,11 @@ Input::Input(int argc, char ** argv){
        ("nframes",po::value<int>(&nframe),             "Number of frames to read")
        ("navg",   po::value<int>(&navg),               "Trajectories for statistical averaging")
        ("IR",     po::value<bool>(&ir),                "Calculate linear IR spectrum")
+       ("2DIR",   po::value<bool>(&ir2d),              "Calculate 2D IR spectrum")
        ("Raman",  po::value<bool>(&raman),             "Calculate Raman spectrum") 
        ("SFG",    po::value<bool>(&sfg),               "Calculate SFG spectrum")
        ("inh",    po::value<bool>(&sd),                "Inhomogeneous limit")
+       ("anharm", po::value<double>(&anharm),            "Diagonal anharmonicity for 2D IR")
        ;
 
        po::variables_map vm;
@@ -84,6 +86,8 @@ Input::Input(int argc, char ** argv){
    inpfile << " nframes = " <<  nframe << endl;
    inpfile << "    navg = " <<  navg << endl;
    inpfile << "      IR = " <<  ir << endl;
+   inpfile << "    IR2D = " << ir2d << endl;
+   inpfile << "  anharm = " << anharm << endl;
    inpfile << "   Raman = " <<  raman << endl;
    inpfile << "     SFG = " <<  sfg << endl;
    inpfile << "     inh = " <<  sd << endl;

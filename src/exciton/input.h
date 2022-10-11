@@ -26,8 +26,10 @@ public:
   double getTrlx() const { return trlx; }
   double getTsep() const { return tsep; }
   double getWavg() const { return w_avg; }
+  double getAnh()  const { return anharm; }
 
   bool ifIR()     const { return ir; }
+  bool ifIR2D()   const { return ir2d; }
   bool ifRaman()  const { return raman; }
   bool ifSFG()    const { return sfg; }
   bool ifSD()     const { return sd; }
@@ -48,8 +50,10 @@ private:
   double tsep = 2.0; // separation time in ps
   double w_avg = 0.0;
   double ts = 0.0;
+  double anharm = 0.0; // diagonal anharmonicity for 2d ir
 
   bool ir = false;     // calc IR spectra
+  bool ir2d = false;  // calculate 2D IR spectra
   bool raman = false;  // calc Raman spectra
   bool sfg = false;    // calc SFG spectra
   bool sd = false;

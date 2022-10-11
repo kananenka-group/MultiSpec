@@ -24,7 +24,8 @@ class Exc{
 public:
    Exc(string, string, string, int, int, int, 
        double, double, double, double, double,
-       double, bool, bool, bool, bool);
+       double, double, bool, bool, bool, bool, 
+       bool);
   ~Exc(){};
 
    void run();
@@ -35,6 +36,7 @@ private:
    void readPf(int,bool);
    void readFzf(int,bool);
    void FTIR();
+   void calc2DIR();
    void Raman();
    void SFG();
    void moveF();
@@ -48,9 +50,11 @@ private:
    void printRamT();
    void printRamS();
    void scaleTDM();
+   void buildH2();
    void sdIR();
    void sdSFG();
    void sdRaman();
+   int get2nx(int, int);
 
    vector<double> H1;
    vector<double> mu1_x;
@@ -82,6 +86,8 @@ private:
    vector<double> sdr_vh;
    vector<double> sdr_w;
 
+   vector<double> H2;
+
    vector<complex<double>> F;
    vector<complex<double>> mR1D;
    vector<complex<double>> VVT;
@@ -104,6 +110,8 @@ private:
    string Fzfile = "Fz.bin";
 
    int nchrom;
+   int n2ex;
+   int n2ex2;
    int ntime;
    int nchrom2;
    int ncor;
@@ -115,12 +123,15 @@ private:
 
    double dt;
    double tc;
-   double rlx_time;
+   double T1;
+   double T2;
    double sep_time;
    double start_time;
    double w_avg;
+   double anharm;
 
    bool ir;
+   bool ir2d;
    bool raman;
    bool sfg;
    bool sd;

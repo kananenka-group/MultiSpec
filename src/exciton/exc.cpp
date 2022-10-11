@@ -4,23 +4,27 @@ using namespace std;
 
 Exc::Exc(string h_file_name, string d_file_name, string p_file_name, int nchr, int nt, 
          int nv, double deltaT, double corrT, double trel, double tsep, double ts,
-         double wav, bool irs, bool ramans, bool sfgs, bool inh):
+         double wav, double anharm, bool irs, bool ir2ds, bool ramans, bool sfgs, bool inh):
          Hfile(h_file_name), Dfile(d_file_name), Pfile(p_file_name), nchrom(nchr), 
-         ntime(nt), navg(nv), dt(deltaT), tc(corrT), rlx_time(trel), sep_time(tsep), 
-         start_time(ts), w_avg(wav), ir(irs), raman(ramans), sfg(sfgs), sd(inh)
+         ntime(nt), navg(nv), dt(deltaT), tc(corrT), T1(trel), sep_time(tsep), 
+         start_time(ts), w_avg(wav), anharm(anharm), ir(irs), ir2d(ir2ds), raman(ramans), 
+         sfg(sfgs), sd(inh)
 {
    // setting up some variables 
    int nfrmn = 0;
-   if (ir || raman || sfg){
-      ncor = (int) (tc/dt);
-      nsep = (int) (sep_time/dt); 
-      nstart = (int) (start_time/dt);
-      nfrmn = nstart+navg*ncor+nsep*(navg-1);
+   ncor = (int) (tc/dt);
+   nsep = (int) (sep_time/dt); 
+   nstart = (int) (start_time/dt);
 
+   if (ir || raman || sfg){
+      nfrmn = nstart+navg*ncor+nsep*(navg-1);
       if(nfrmn > ntime){
         printf("\n Error! The input trajectory is too short, need %d more frames.\n\n",(nfrmn-ntime));
         exit(EXIT_FAILURE);
       }
+   }else if (ir2d){
+      // check trajectory length here...
+
    }
 
    printf("\n** Setting up calculation: **\n");
@@ -36,18 +40,75 @@ Exc::Exc(string h_file_name, string d_file_name, string p_file_name, int nchr, i
 void Exc::run()
 {
    // define some common variables
-   ndim1   = nchrom*(nchrom+1)/2;
    nchrom2 = nchrom*nchrom;
+   ndim1   = nchrom*(nchrom+1)/2;
 
+   // 1D excitation subspace
    F.resize(nchrom2);
    H1.resize(nchrom2);
    evecsr.resize(nchrom2);
    evals.resize(nchrom);
 
+   // 2D excitaiton subspace
+   n2ex = nchrom*(nchrom+1)/2;
+   n2ex2= n2ex*n2ex;
+   H2.resize(n2ex2);
+
    // run jobs...
    if(ir) FTIR();
    if(raman) Raman();
    if(sfg) SFG();
+   if(ir2d) calc2DIR();
+
+}
+
+void Exc::calc2DIR()
+{
+
+   printf("\n** 2D IR module **\n");
+
+   // open dipole input file
+   hinfile.open(Hfile, ios::binary);
+   if(hinfile.fail()){
+      printf(" Error! Could not open file: %s \n",Hfile.c_str());
+      exit(EXIT_FAILURE);
+   }
+   hinfile.clear();
+   hinfile.seekg(0, ios::beg);
+
+   dinfile.open(Dfile, ios::binary);
+   if(dinfile.fail()){
+      printf(" Error! Could not open file: %s \n",Dfile.c_str());
+      exit(EXIT_FAILURE);
+   }
+   dinfile.clear();
+   dinfile.seekg(0, ios::beg);
+
+   // relaxation time:
+   T2 = 2.0*T1;
+   printf("   Relaxation time T1: %7.5f [ps] \n",T1);
+   printf("   Relaxation time T2 (2*T1): %7.5f [ps] \n",T2);
+   printf("   Diagonal anharmonicity: %7.4f [cm-1]\n",anharm);
+
+   // main loop...
+   printf("\n** Calculating 2D IR response functions**\n");
+   readHf(nstart);
+   readDf(nstart,false);
+   for(int ii=0; ii<navg; ++ii){
+      fill_n(F.begin(), nchrom2, complex_zero);
+      for(int jj=0; jj<nchrom;++jj)  F[jj*nchrom+jj] = complex_one;
+      readHf(1);
+      readDf(1,true);
+      calcSFG(0);
+      for(int tt=1; tt<ncor; ++tt){
+         readHf(1);
+         readDf(1,false);
+         moveF();
+         calcSFG(tt);
+      }
+      readHf(nsep);
+      readDf(nsep,false);
+   }
 
 }
 
@@ -93,7 +154,7 @@ void Exc::SFG()
    finfile.clear();
    finfile.seekg(0, ios::beg);
 
-   printf("   Relaxation time: %7.5f [ps] \n",rlx_time);
+   printf("   Relaxation time: %7.5f [ps] \n",T1);
 
    // allocate variables
    plz_xx0.resize(nchrom);
@@ -223,7 +284,7 @@ void Exc::Raman()
    pinfile.clear();
    pinfile.seekg(0, ios::beg);
 
-   printf("   Relaxation time: %7.5f [ps] \n",rlx_time);
+   printf("   Relaxation time: %7.5f [ps] \n",T1);
 
    // allocate memory
    plz_xx0.resize(nchrom);
@@ -333,7 +394,7 @@ void Exc::FTIR()
    dinfile.clear();
    dinfile.seekg(0, ios::beg);
 
-   printf("   Relaxation time: %7.5f [ps] \n",rlx_time);
+   printf("   Relaxation time: %7.5f [ps] \n",T1);
 
    // allocate memory
    mu1_x.resize(nchrom);
@@ -432,7 +493,7 @@ void Exc::calcR1D(int ti)
   cblas_zdotu_sub(lda, &mut[0], 1, &work[0], 1, &cz); 
 
   double dtc = (double) ti;
-  double exptc = exp(-1.0*dt*dtc/(2.0*rlx_time));
+  double exptc = exp(-1.0*dt*dtc/(2.0*T1));
   complex<double> tmptcf = (cx+cy+cz)*exptc/3.0;
   mR1D[ti] += tmptcf;
 
@@ -530,8 +591,79 @@ void Exc::readHf(int nread)
          // subtract average frequency to improve numerical stability
          H1[i*nchrom + i] -= w_avg;
       }
+      // build two-exciton Hamiltonian in case of 2D IR
+      if (ir2d) buildH2();
    }
 
+}
+
+void Exc::buildH2()
+{
+//
+// Build two-exciton Hamiltonian for 2D IR calculations here
+//
+   int nind, mind;
+
+   fill_n(H2.begin(), n2ex2, 0.0);
+
+   // diagonal part
+   for(int i=0; i<nchrom; ++i){
+      nind = get2nx(i,i);
+      // <i,i|H|i,i>
+      H2[nind*n2ex + nind] = 2.0*H1[i*nchrom + i] - anharm;
+      for(int j=i+1; j<nchrom; j++){
+         nind = get2nx(i,j);
+         // <i,j|H|i,j>
+         H2[nind*n2ex + nind] = H1[i*nchrom + i] + H1[j*nchrom + j];
+      }
+   } 
+
+   // off diagonal couplings between singly and doubly excited state
+   // under harmonic approximation it is sqrt(2) of the same couplings
+   // within the singly excited subspace
+   for(int i=0; i<nchrom; i++){
+      nind = get2nx(i,i);
+      for(int j=0; j<nchrom; ++j){
+         mind = get2nx(i,j);
+         // <i,i|H|i,j>
+         H2[nind*n2ex + mind] = sqrt(2.0)*H1[i*nchrom + j];
+         H2[mind*n2ex + nind] = H2[nind*n2ex + mind];
+      }
+   }
+
+   // off diagonal couplings between singly excited states <i,j|H|i,k>
+   for(int i=0; i<nchrom; ++i){
+      for(int j=i+1; j<nchrom; ++j){
+         nind = get2nx(i,j);
+         for(int k=0; k<nchrom; ++k){
+            if(i==k) continue;
+            mind = get2nx(i,k);
+            if(nind == mind) continue;
+            // <i,j|H|i,k>
+            H2[nind*n2ex + mind] = H1[j*nchrom + k];
+            H2[mind*n2ex + nind] = H2[nind*n2ex + mind];
+         }
+         for(int k=0; k<nchrom; ++k){
+            if(j==k) continue;
+            mind = get2nx(j,k);
+            if(nind == mind) continue;
+            // <i,j|H|k,j>
+            H2[nind*n2ex + mind] = H1[i*nchrom+k];
+            H2[mind*n2ex + nind] = H2[nind*n2ex + mind];
+         }
+      }
+   }
+   
+}
+
+int Exc::get2nx(int i, int j)
+{
+// return index for two-exciton states
+  if(i>j){
+     return nchrom*i - i*(i+1)/2 + j;
+  }else{
+     return nchrom*j - j*(j+1)/2 + i;
+  }
 }
 
 void Exc::readDf(int nread, bool st)
@@ -735,7 +867,7 @@ void Exc::calcRm(int ti)
   ijij = cxyxy + cxzxz + cyzyz;
 
   double dtc = (double) ti;
-  double exptc = exp(-1.0*dt*dtc/(2.0*rlx_time));
+  double exptc = exp(-1.0*dt*dtc/(2.0*T1));
 
   VVT[ti] += (3.0*iiii + iijj + 4.0*ijij)*exptc/15.0;
   VHT[ti] += (2.0*iiii - iijj + 6.0*ijij)*exptc/30.0;
@@ -909,7 +1041,7 @@ void Exc::calcSFG(int ti)
   cblas_zdotu_sub(lda, &tpt[0], 1, &work[0], 1, &cxzx);
 
   double dtc = (double) ti;
-  double exptc = exp(-1.0*dt*dtc/(2.0*rlx_time));
+  double exptc = exp(-1.0*dt*dtc/(2.0*T1));
 
   yyzt[ti] += cyyz*exptc;
 

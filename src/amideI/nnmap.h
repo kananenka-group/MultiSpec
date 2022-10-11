@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include "../util/util.h"
 
 using namespace std;
 
@@ -25,6 +26,7 @@ public:
 private:
 
   string map_name;
+  string map_name_inp;
   
   vector<float> NtermShift;
   vector<float> CtermShift;

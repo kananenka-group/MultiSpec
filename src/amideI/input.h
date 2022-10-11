@@ -28,6 +28,9 @@ public:
   vector<string> getItpfs() const { return itpfs; }
   vector<string> getIsoL()  const { return isolabels; }
   string getNNmap()         const { return nn_map; }
+  string getNNCmap()        const { return nnc_map; }
+  string getELmap()         const { return el_map; }
+  string getResMapFile()    const { return res_map_file;}
   float getIsoShift()       const { return isoShift; }
 
 private:
@@ -48,7 +51,12 @@ private:
   string job_type    = "full";
   string gro_file    = "confout.gro";
   string top_file    = "topol.top";
-  string nn_map      = "jensen_2006";
+  string nn_map      = "jansen_2006";
+  string nnc_map     = "jansen_2006";
+  string el_map      = "wang_2011";
+  string res_map_file= "";
+  // implement different cut-offs for electrostatics later
+  //string cutoffelst  = "cg";
 
   ofstream inpfile;
 

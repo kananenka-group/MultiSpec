@@ -2,13 +2,14 @@
 
 using namespace std;
 
-NNmap::NNmap(string map_name) :
-             map_name(map_name)
+NNmap::NNmap(string map_name_inp) :
+             map_name_inp(map_name_inp)
 {
-   printf("\n** Reading Nearest-Neighbor Map. **\n");
+   map_name = str_toupper(map_name_inp);
+   printf("\n** Reading nearest-neighbor map. **\n");
 
-   if(map_name=="Jansen_2006"){
-       printf("   Using Nearest-Neighbor map from : Jansen et al. J. Chem. Phys. 125, 044312 (2006).\n");
+   if(map_name=="JANSEN_2006"){
+       printf("   Using nearest-neighbor map from : Jansen et al. J. Chem. Phys. 125, 044312 (2006).\n");
        // NN frequency shifts, copied from Jansen's AmideImap program
        // see Supporting info for the paper above.
        NtermShift ={ 0.404,-1.205, 0.789,13.541,22.541,28.548,50.551,28.548,22.541,13.541, 0.789,-1.205, 0.404,

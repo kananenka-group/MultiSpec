@@ -92,9 +92,12 @@ void System::readItp()
    string line, entry, substr, atom_name, mt;
    int pos; 
    int n_this_res;
+   int saveCg, thisCg;
    bool recording, mtfound, skip;
    vector<AtomsRes> Residue;
+   vector<int> Chgtmp;
    vector<bool> assigned(natoms,false);
+   vector<int> ChgAll(natoms);
 
    for(int ifile=0; ifile<nItpFiles; ++ifile)
    {
@@ -110,6 +113,7 @@ void System::readItp()
       mtfound = false;
       skip=false;
       n_this_res=0;
+      saveCg=-10;
       //this_residue=-1;
       // 2. Reading the file
       while(getline(itpfile, line)) {
@@ -185,6 +189,7 @@ void System::readItp()
             temp.resName = strs[3];
             temp.atomName= strs[4];
             temp.charge  = stof(strs[6]);
+            thisCg       = stoi(strs[5]);
 
             // sometimes (water) atomic mass is missing
             // trying to add it here
@@ -212,20 +217,52 @@ void System::readItp()
 
             Residue.push_back(temp);
 
+            if(thisCg != saveCg){
+               Chgtmp.push_back(1);
+               saveCg = thisCg;
+            }else{
+               Chgtmp.push_back(0);
+            }
+
          } // end recording
 
       } // end reading itp file
-      matchRes(Residue,assigned,n_this_res);
+      matchRes(Residue,assigned,n_this_res,Chgtmp,ChgAll);
       Residue.clear();
+      Chgtmp.clear();
       itpfile.close();
+   }
+
+
+   // charge group start 
+   for(int ii=0; ii<natoms; ++ii)
+      if(ChgAll[ii]==1)
+         chgSt.push_back(ii);
+   chgSt.push_back(natoms);
+
+   // atoms that belong to each charge group
+   int cgb, cge;
+   int cgcount = 0;
+
+   grpInd.resize(natoms);
+
+   int ngroups = chgSt.size()-1;
+
+   for(int jj=0; jj<ngroups; ++jj){
+      cgb = chgSt[jj];
+      cge = chgSt[jj+1];    
+      for(int ii=cgb; ii<cge; ++ii)
+         grpInd[ii] = cgcount;
+      
+      cgcount++;
    }
 
    printAtomInfo(assigned);
 
-
 }
 
-void System::matchRes(vector<AtomsRes> R,vector<bool> &good, int n_this)
+void System::matchRes(vector<AtomsRes> R,vector<bool> &good, int n_this,
+                      const vector<int> Chgtmp, vector<int> &ChgAll)
 {
 //
 // Match atoms provided in GROMACS configuration file
@@ -261,11 +298,14 @@ void System::matchRes(vector<AtomsRes> R,vector<bool> &good, int n_this)
           }
        }
        if(match){
+          // matching atoms here
           for(int m=0; m<rlen; ++m){
              atoms[n+m].charge=R[m].charge;
              atoms[n+m].mass=R[m].mass;
              good[n+m]=true;
-          } 
+          }// update charge group list
+          for(int m=0; m<rlen; ++m)
+             ChgAll[n+m] = Chgtmp[m];
        }
     }   
 
@@ -365,7 +405,7 @@ void System::printAtomInfo(const vector<bool> assigned)
    for(int j=0; j<natoms; ++j)
       aout_file << atoms[j].resNum << atoms[j].resName << "\t"
                 << atoms[j].atomName << "\t" << atoms[j].charge << "\t" 
-                << atoms[j].mass << endl;  
+                << atoms[j].mass << "\t" << grpInd[j] << endl;  
 
    aout_file.close();
 

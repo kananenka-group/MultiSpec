@@ -451,7 +451,7 @@ void Exc::moveF()
 
   info = LAPACKE_dsyevd(LAPACK_ROW_MAJOR, 'V', 'U', lda, &Ht[0], lda, &W[0]);
   if(info != 0){
-     printf("Error! LAPACKE_dsyeved returned \n");
+     printf("Error! LAPACKE_dsyeved returned %d \n",info);
      exit(EXIT_FAILURE);
   }
 
@@ -468,9 +468,6 @@ void Exc::moveF()
    vector<complex<double>> evec(nchrom2, complex_zero);
    vector<complex<double>> work(nchrom2, complex_zero);
    vector<complex<double>> eiH(nchrom2, complex_zero); 
-
-   //fill_n(evecsr.begin(), nchrom2, 0.0);
-   //fill_n(evals.begin(), nchrom, 0.0);
 
    for (int i=0; i<nchrom; i++ ){
       evals[i] = W[i];

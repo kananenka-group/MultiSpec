@@ -1,6 +1,8 @@
 #ifndef CONST_H
 #define CONST_H
 
+#include <cmath>
+
 namespace constants
 {
 // common constants
@@ -41,6 +43,11 @@ const float SWITCHF_CUT = 4.0;
 
 // AMIDE I MODULE----------------
 const float CN_dist_cutoff = 20.0*A0;      //20A
+const float amideItdAngle = 10.0*(M_PI/180.0);
+const float amideItdMag = 2.73;  //D/A/amu^1/2
+const float amideItd1 = 1.256668374; // 0.665 A -> a0
+const float amideItd2 = 0.487549535; // 0.258 A -> a0
+const float amideIcoupConst = 383.313*A0*A0*A0/(amideItdMag*amideItdMag);
 }
 
 

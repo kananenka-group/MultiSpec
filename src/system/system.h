@@ -22,6 +22,8 @@ public:
 
    int getNatoms() { return natoms; }
    const vector<AtomsRes>   getSystemData()  { return atoms; }
+   const vector<int> getChgSt()  { return chgSt; }
+   const vector<int> getCgInd()  { return grpInd; }
 
   ~System();
 
@@ -42,11 +44,15 @@ private:
 
    vector<string> molecules;
    vector<int> nmol;
+   vector<int> chgSt;
+   vector<int> ChgAll;
+   vector<int> grpInd;
 
    void readItp();
    void readGro();
    void readTop();
-   void matchRes(const vector<AtomsRes>, vector<bool> &, int);
+   void matchRes(const vector<AtomsRes>, vector<bool> &, int, const vector<int>,
+                 vector<int> &);
    void printAtomInfo(const vector<bool>);
    string exractAndTrim(const string &, const int, const int);
 

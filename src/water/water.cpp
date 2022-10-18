@@ -4,13 +4,14 @@ water::water(string wm_name, string wS_wmap_name, string wB_map_name,
              string job_type, string traj_file_name, string gro_file_name, 
              string atoms_file_name, int nfr, int d2o,  int nst, 
              bool doir, bool doraman, bool dosfg, bool doDoDov, bool eHp, bool intrac, 
-             bool intermc_OHs, float trdip_for_SFG, float fermi_c) : 
+             bool intermc_OHs, float trdip_for_SFG, float fermi_c, float imcut) : 
              water_model_name_inp(wm_name), jobType(job_type), 
              traj_file(traj_file_name), gro_file(gro_file_name), 
              ams_file(atoms_file_name), wms(wS_wmap_name, job_type, intrac), 
              wmb(wB_map_name, job_type), nframes(nfr), nd2o(d2o), startframe(nst),
              ir(doir), raman(doraman), sfg(dosfg), DoDv(doDoDov), 
-             printHam(eHp), intermcs(intermc_OHs), tdSFG(trdip_for_SFG), fc(fermi_c)
+             printHam(eHp), intermcs(intermc_OHs), tdSFG(trdip_for_SFG), fc(fermi_c),
+             imcut(imcut)
 {
    // removing old files
    vector<string> files_to_remove;
@@ -96,16 +97,33 @@ water::water(string wm_name, string wS_wmap_name, string wB_map_name,
          if(counter<startframe)
            continue;
 
+         printf(" counter and frames %d %d \n",counter,nframes);
+
+         printf(" getting coordinates\n");
+
          x = traj.getCoords();
          traj.getBox(box);
          if(moveM) moveMsite();
+
+         printf(" calculating Efield \n");
          calcEf();
+
+         printf(" calculating wxpm \n");
          calcWXPM();
+
+         printf(" updating Hamiltonian\n");
          updateEx();
+
+         printf(" adding intermolecular couplings \n");
+
          if(intermcs) intermC();
          if(ir) trDip();
          if(raman) trPol();
+
+         printf(" writing Hamiltonian\n");
          writeH();
+
+         printf(" writing properties\n");
          if(ir) writeD(); 
          if(raman) writeP(); 
          if(sfg) writeFz();
@@ -119,8 +137,8 @@ water::water(string wm_name, string wS_wmap_name, string wB_map_name,
 
 
    // calc. frequency distributions
-   if(printHam)   
-      freqDist();
+   //if(printHam)   
+   //   freqDist();
 
    // write a temporary file for passing some info for subsequent job
    //jobfile.write(reinterpret_cast<char*>(&nchromt), sizeof(int));
@@ -728,7 +746,7 @@ void water::intermC(){
               hf[nchromt*(offs*i+k-1)+offs*j+l-1] = val;
               //hf[nchromt*(offs*i+k-1)+offs*j+l-1] = waterTDC(roha, trda, x[oxyInd[j]+l], x[oxyInd[j]], box);
               //hf[nchromt*(offs*i+k-1)+offs*j+l-1] *= m10[2*i+k-1]*m10[2*j+l-1]*x10[2*i+k-1]*x10[2*j+l-1];
-              w_inter.push_back(val);
+              //w_inter.push_back(val);
            }
         }
      }
@@ -916,7 +934,7 @@ void water::updateEx(){
 
      //hf[ij*nchromt+ij+1] = wms.getcnn(efs[2*ii],x10[2*ii],p10[2*ii],
      //                                 efs[2*ii+1],x10[2*ii+1],p10[2*ii+1]);
-     w_intra.push_back(val);
+     //w_intra.push_back(val);
   }
 
   // Fermi coupling
@@ -998,7 +1016,7 @@ void water::freqDist()
 //
 // Intermolecular couplings
 //
-  ofstream w_inter_file;
+   ofstream w_inter_file;
    w_inter_file.open(w_inter_fname);
    if(!w_inter_file.is_open()){
       printf(" Error! Cannot open file: %s \n",w_inter_fname.c_str());

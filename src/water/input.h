@@ -36,6 +36,7 @@ public:
   float getTDSFG()       const { return trdipSFG; }
   int getStartFrame()    const { return startframe; }
   bool getExcHam()       const { return excHam; }
+  float getImcut()      const { return imcut; }       
 
 private:
   int nframes = 1;
@@ -48,6 +49,7 @@ private:
  
   float fc = 25.0;  // OH stretch-HOH bend overtone Fermi coupling
   float trdipSFG=-10;
+  float imcut=-10;
 
   bool dodov = false;
   bool intrac= true;

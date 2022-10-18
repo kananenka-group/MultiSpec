@@ -16,6 +16,7 @@
 #include "../const/const.h"
 #include "../fft/dofft.h"
 #include "../math/nummath.h"
+#include "../util/util.h"
 
 using namespace std;
 
@@ -55,11 +56,15 @@ private:
    void sdSFG();
    void sdRaman();
    int get2nx(int, int);
+   void buildM21();
 
    vector<double> H1;
    vector<double> mu1_x;
    vector<double> mu1_y;
    vector<double> mu1_z;
+   vector<double> mu1_2_x;
+   vector<double> mu1_2_y;
+   vector<double> mu1_2_z;
    vector<double> mu1_x0;
    vector<double> mu1_y0;
    vector<double> mu1_z0;
@@ -110,6 +115,7 @@ private:
    string Fzfile = "Fz.bin";
 
    int nchrom;
+   int n1ex;
    int n2ex;
    int n2ex2;
    int ntime;

@@ -40,16 +40,17 @@ Exc::Exc(string h_file_name, string d_file_name, string p_file_name, int nchr, i
 void Exc::run()
 {
    // define some common variables
+   n1ex = nchrom;
    nchrom2 = nchrom*nchrom;
    ndim1   = nchrom*(nchrom+1)/2;
 
-   // 1D excitation subspace
+   // one-exciton subspace
    F.resize(nchrom2);
    H1.resize(nchrom2);
    evecsr.resize(nchrom2);
    evals.resize(nchrom);
 
-   // 2D excitaiton subspace
+   // two-exciton subspace
    n2ex = nchrom*(nchrom+1)/2;
    n2ex2= n2ex*n2ex;
    H2.resize(n2ex2);
@@ -83,6 +84,11 @@ void Exc::calc2DIR()
    }
    dinfile.clear();
    dinfile.seekg(0, ios::beg);
+
+   // allocate memeory
+   mu1_2_x.resize(n1ex*n2ex,0.0);
+   mu1_2_y.resize(n1ex*n2ex,0.0);
+   mu1_2_z.resize(n1ex*n2ex,0.0);
 
    // relaxation time:
    T2 = 2.0*T1;
@@ -522,6 +528,7 @@ void Exc::moveF()
 
   for (int ii=0; ii<nchrom; ii++){
      arg = img*W[ii]*dt/constants::HBAR;
+     //arg = -img*W[ii]*dt/constants::HBAR;
      U[ii*nchrom+ii] = exp(arg);
    }
 
@@ -551,6 +558,9 @@ void Exc::moveF()
    cblas_zgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, lda, lda,
                lda, &complex_one, &eiH[0], lda, &F[0], lda, &complex_zero,
                &work[0], lda);
+   //cblas_zgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, lda, lda,
+   //            lda, &complex_one, &F[0], lda, &eiH[0], lda, &complex_zero,
+   //            &work[0], lda);
 
    memcpy(&F[0], &work[0], sizeof(complex<double>)*nchrom2);
 
@@ -575,10 +585,16 @@ void Exc::printTCF1D(string fname, string stype, vector<complex<double>> R1D)
 
 void Exc::readHf(int nread)
 {
+//
+// Read one-exciton Hamiltonian from Hamilton.bin file
+// if nread==1: read next frame from the file and build the Hamiltonian matrix
+// else just read the specified number of frames
+//
    vector<float> Htmp;
    Htmp.resize(ndim1*nread);
 
    hinfile.read(reinterpret_cast<char*>(&Htmp[0]), Htmp.size()*sizeof(float));
+   if( not hinfile.good() ) { fileReadErr(Hfile); }
 
    if(nread==1){
       int jj;
@@ -588,11 +604,18 @@ void Exc::readHf(int nread)
             H1[i*nchrom + j] = (double) Htmp[jj+j];
             H1[j*nchrom + i] = H1[i*nchrom + j];
          }
-         // subtract average frequency to improve numerical stability
-         H1[i*nchrom + i] -= w_avg;
       }
       // build two-exciton Hamiltonian in case of 2D IR
       if (ir2d) buildH2();
+
+      // subtract average frequency to improve numerical stability
+      for(int i=0; i<nchrom; ++i)
+         H1[i*nchrom + i] -= w_avg;
+
+      // also do it with the two-exciton manifold
+      if (ir2d)
+         for(int i=0; i<n2ex; ++i)
+            H2[i*n2ex + i] -= 2.0*w_avg;
    }
 
 }
@@ -607,48 +630,48 @@ void Exc::buildH2()
    fill_n(H2.begin(), n2ex2, 0.0);
 
    // diagonal part
-   for(int i=0; i<nchrom; ++i){
+   for(int i=0; i<n1ex; ++i){
       nind = get2nx(i,i);
       // <i,i|H|i,i>
-      H2[nind*n2ex + nind] = 2.0*H1[i*nchrom + i] - anharm;
-      for(int j=i+1; j<nchrom; j++){
+      H2[nind*n2ex + nind] = 2.0*H1[i*n1ex + i] - anharm;
+      for(int j=i+1; j<n1ex; j++){
          nind = get2nx(i,j);
          // <i,j|H|i,j>
-         H2[nind*n2ex + nind] = H1[i*nchrom + i] + H1[j*nchrom + j];
+         H2[nind*n2ex + nind] = H1[i*n1ex + i] + H1[j*n1ex + j];
       }
    } 
 
    // off diagonal couplings between singly and doubly excited state
    // under harmonic approximation it is sqrt(2) of the same couplings
    // within the singly excited subspace
-   for(int i=0; i<nchrom; i++){
+   for(int i=0; i<n1ex; i++){
       nind = get2nx(i,i);
-      for(int j=0; j<nchrom; ++j){
+      for(int j=0; j<n1ex; ++j){
          mind = get2nx(i,j);
          // <i,i|H|i,j>
-         H2[nind*n2ex + mind] = sqrt(2.0)*H1[i*nchrom + j];
+         H2[nind*n2ex + mind] = sqrt(2.0)*H1[i*n1ex + j];
          H2[mind*n2ex + nind] = H2[nind*n2ex + mind];
       }
    }
 
    // off diagonal couplings between singly excited states <i,j|H|i,k>
-   for(int i=0; i<nchrom; ++i){
-      for(int j=i+1; j<nchrom; ++j){
+   for(int i=0; i<n1ex; ++i){
+      for(int j=i+1; j<n1ex; ++j){
          nind = get2nx(i,j);
-         for(int k=0; k<nchrom; ++k){
+         for(int k=0; k<n1ex; ++k){
             if(i==k) continue;
             mind = get2nx(i,k);
             if(nind == mind) continue;
             // <i,j|H|i,k>
-            H2[nind*n2ex + mind] = H1[j*nchrom + k];
+            H2[nind*n2ex + mind] = H1[j*n1ex + k];
             H2[mind*n2ex + nind] = H2[nind*n2ex + mind];
          }
-         for(int k=0; k<nchrom; ++k){
+         for(int k=0; k<n1ex; ++k){
             if(j==k) continue;
             mind = get2nx(j,k);
             if(nind == mind) continue;
             // <i,j|H|k,j>
-            H2[nind*n2ex + mind] = H1[i*nchrom+k];
+            H2[nind*n2ex + mind] = H1[i*n1ex + k];
             H2[mind*n2ex + nind] = H2[nind*n2ex + mind];
          }
       }
@@ -674,6 +697,7 @@ void Exc::readDf(int nread, bool st)
    Mtmp.resize(size);
 
    dinfile.read(reinterpret_cast<char*>(&Mtmp[0]), Mtmp.size()*sizeof(float));
+   if( not dinfile.good() ) { fileReadErr(Dfile); }
  
    if(nread==1){
       for(int ii=0; ii<nchrom; ++ii){
@@ -687,7 +711,40 @@ void Exc::readDf(int nread, bool st)
          memcpy(&mu1_y0[0], &mu1_y[0], sizeof(double)*nchrom);
          memcpy(&mu1_z0[0], &mu1_z[0], sizeof(double)*nchrom);
       }
+
+      if (ir2d)
+         buildM21();
+      
    }
+
+}
+
+void Exc::buildM21()
+{
+//
+// Build two-exciton to one-exciton transition dipole moment
+//
+   int mx;
+
+   fill_n(mu1_2_x.begin(), n1ex*n2ex, 0.0);
+   fill_n(mu1_2_y.begin(), n1ex*n2ex, 0.0);
+   fill_n(mu1_2_z.begin(), n1ex*n2ex, 0.0);
+
+   for(int i=0; i<n1ex; ++i){
+      mx = get2nx(i,i);
+      // <i|mu|i,i>
+      mu1_2_x[i*n2ex + mx] = sqrt(2.0)*mu1_x[i];
+      mu1_2_y[i*n2ex + mx] = sqrt(2.0)*mu1_y[i];
+      mu1_2_z[i*n2ex + mx] = sqrt(2.0)*mu1_z[i];
+      for(int j=0; j<n1ex; ++j){
+         if(j==i) continue;
+         mx = get2nx(i,j);
+         // <i|mu|i,j>
+         mu1_2_x[i*n2ex + mx] = mu1_x[j];
+         mu1_2_y[i*n2ex + mx] = mu1_y[j];
+         mu1_2_z[i*n2ex + mx] = mu1_z[j];
+      }
+   } 
 
 }
 
@@ -728,6 +785,7 @@ void Exc::readPf(int nread, bool st)
    Ptmp.resize(size);
 
    pinfile.read(reinterpret_cast<char*>(&Ptmp[0]), Ptmp.size()*sizeof(float));
+   if( not pinfile.good() ) { fileReadErr(Pfile); }
 
    if(nread==1){
       for(int ii=0; ii<nchrom; ++ii){
@@ -1062,6 +1120,7 @@ void Exc::readFzf(int nread, bool st)
    Ftmp.resize(size);
 
    finfile.read(reinterpret_cast<char*>(&Ftmp[0]), Ftmp.size()*sizeof(float));
+   if( not finfile.good() ) { fileReadErr(Fzfile); }
 
    if(nread==1){
       for(int ii=0; ii<nchrom; ++ii)

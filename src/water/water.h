@@ -22,7 +22,7 @@ class water{
 public:
    water(string, string, string, string, string, string, 
          string, int, int, int, bool, bool, bool, bool, 
-         bool, bool, bool, float, float);
+         bool, bool, bool, float, float, float);
 
   ~water();
 
@@ -50,6 +50,7 @@ private:
 
   float tdSFG;
   float fc;
+  float imcut;
 
   int atoms_in_mol;
   int natoms;

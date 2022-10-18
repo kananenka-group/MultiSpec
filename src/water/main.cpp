@@ -27,7 +27,7 @@ int main(int argc, char ** argv){
             input.getStartFrame(), input.ifIR(), 
             input.ifRaman(), input.ifSFG(), input.ifDODv(), input.getExcHam(),
             input.getIntraC(), input.getInermcs(), input.getTDSFG(), 
-            input.getFc());
+            input.getFc(), input.getImcut());
 
    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 

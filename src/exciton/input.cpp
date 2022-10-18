@@ -29,7 +29,7 @@ Input::Input(int argc, char ** argv){
        ("Raman",  po::value<bool>(&raman),             "Calculate Raman spectrum") 
        ("SFG",    po::value<bool>(&sfg),               "Calculate SFG spectrum")
        ("inh",    po::value<bool>(&sd),                "Inhomogeneous limit")
-       ("anharm", po::value<double>(&anharm),            "Diagonal anharmonicity for 2D IR")
+       ("anharm", po::value<double>(&anharm),          "Diagonal anharmonicity for 2D IR")
        ;
 
        po::variables_map vm;

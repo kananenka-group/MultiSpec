@@ -20,6 +20,12 @@ void printv()
 
 }
 
+void fileReadErr(string _fn_)
+{
+   printf("Error! Reading file %s file. Probably reached EOF.\n",_fn_.c_str());
+   exit(EXIT_FAILURE);
+}
+
 void remove_leading_trailing_whitespace(string &str)
 { 
   str.erase(str.begin(), find_if(str.begin(), str.end(), bind1st(std::not_equal_to<char>(), ' '))); 

@@ -15,6 +15,7 @@
 
 using namespace std;
 
+void fileReadErr(string _fn_);
 void remove_leading_trailing_whitespace(string &str);
 void printv();
 void tstamp(std::string message);

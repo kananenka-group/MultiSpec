@@ -1,6 +1,7 @@
 #include "traj.h"
 
 using namespace std;
+
 Traj::Traj(const char *xtcfile)
 {
   printf("\n** Checking trajectory file: %s. **\n",xtcfile);
@@ -13,7 +14,7 @@ Traj::Traj(const char *xtcfile)
   if (trj == NULL) {
     printf("ERROR: trajectory file %s cannot be read.\n",xtcfile);
     exit(EXIT_FAILURE);
-  }
+  } 
 
   //initialize vars
   nT = 0;
@@ -57,3 +58,4 @@ void Traj::getBox(rvec &out) const {
   for (int kk=0; kk<DIM; kk++)
     out[kk]=box[kk];
 }
+

@@ -52,7 +52,7 @@ endif()
 ###################################
 # SOURCE
 ###################################
-file(GLOB SOURCES_EXC "exciton/*.cpp" "util/*.cpp" "fft/*.cpp" "math/*.cpp")
+file(GLOB SOURCES_EXC "exciton/*.cpp" "util/*.cpp" "fft/*.cpp" "math/*.cpp" "util/*.cpp")
 file(GLOB SOURCES_WAT "water/*.cpp" "util/*.cpp" "const/const.h" "vec/vecManip.h" "traj/*.cpp")
 file(GLOB SOURCES_AMD "amideI/*.cpp" "util/*.cpp" "const/const.h" "vec/vecManip.h" "traj/*.cpp" "system/*.cpp")
 

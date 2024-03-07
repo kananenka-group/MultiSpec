@@ -31,6 +31,9 @@ Input::Input(int argc, char ** argv){
        ("start",       po::value<int>(&startframe),    "starting frame to read from xtc file")
        ("exc_ham",     po::value<bool>(&excHam),       "print diagonal frequencies, inter- and intramolecular couplings")
        ("imcut",       po::value<float>(&imcut),       "cut-off for intermolecular couplings")
+       ("wmin",        po::value<float>(&wmin),        "minimum frequency for frequency distributions")
+       ("wmax",        po::value<float>(&wmax),        "maximum frequency for frequency distributions")
+       ("nbins",       po::value<int>(&nbins),         "number of bins for frequency distributions")
        ;
 
        po::variables_map vm;
@@ -75,10 +78,18 @@ Input::Input(int argc, char ** argv){
     }else{
        inpfile << "     trdipSFG = " << " not set " << endl;
     }
+    if(imcut<1e6){
+       inpfile << "        imcut = " << imcut << endl;
+    }else{
+       inpfile << "        imcut = " << " not set " << endl;
+    }
     inpfile << "       intrac = " << intrac << endl;
     inpfile << "     intercOH = " << intercs << endl;
     inpfile << "        start = " << startframe << endl;
     inpfile << "      exc_ham = " << excHam << endl;
+    inpfile << "        w_min = " << wmin << endl;
+    inpfile << "        w_max = " << wmax << endl;
+    inpfile << "        nbins = " << nbins <<endl;
     inpfile.close();
 
 }

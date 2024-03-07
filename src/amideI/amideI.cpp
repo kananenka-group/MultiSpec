@@ -4,12 +4,12 @@ amideI::amideI(string gro_file, string traj_file, string mapsFile,
                vector<string> itp_files,
                string top_file, string spec_type, vector<string> isolabels,
                string nn_map_name, string nnc_map_name, string el_map_name, 
-               int nframes, int startframe, bool ir, bool eHp, float isoShift) :
+               int nframes, int startframe, bool ir, bool eHp, float isoShift, bool nise) :
                s(gro_file, itp_files, top_file), traj_file(traj_file), 
                jobType(spec_type), isolabels(isolabels),
                map_nn(nn_map_name), map_nnc(nnc_map_name), 
                map_el(el_map_name,mapsFile), nframes(nframes), 
-               startframe(startframe), ir(ir), printH(eHp), isoShift(isoShift)
+               startframe(startframe), ir(ir), printH(eHp), isoShift(isoShift), nise(nise)
 {
 //
 // At this point all molecular information has been processed.
@@ -58,7 +58,12 @@ amideI::amideI(string gro_file, string traj_file, string mapsFile,
    // open output files
    houtfile.open("Hamiltonian.bin", ios::binary | ios::out);
    jobfile.open("job.bin", ios::binary | ios::out);
+
    if(ir) doutfile.open("Dipole.bin", ios::binary | ios::out);
+
+   if(nise)  hDbgoutfile.open("Energy.txt", ios::out);
+   if(nise && ir) dDbgoutfile.open("Dipole.txt", ios::out);
+      
 
    printf("\n** Generating Excitonic Hamiltonian for %d frames. **\n",nframes);
 
@@ -93,8 +98,8 @@ amideI::amideI(string gro_file, string traj_file, string mapsFile,
          //elst();
          updateExd();
          couplings();
-         writeH();
-         if(ir) writeD();
+         writeH(counter-1);
+         if(ir) writeD(counter-1);
       }
    }
 
@@ -906,7 +911,7 @@ amideI::~amideI() {
 }
 
 
-void amideI::writeH()
+void amideI::writeH(int timestep)
 {
   int jj = 0;
   int pr_size;
@@ -917,21 +922,30 @@ void amideI::writeH()
      pr_size -= 1;
   }
 
-  //for(int i=0; i<nchrom; ++i)
-  //   for(int j=i; j<nchrom; ++j)
-  //      cout << hf[i*nchrom+j] << " ";
-  //cout << endl;
+  // write into txt file
+  if(nise){
+     //hDbgoutfile.open("Hamiltonian.txt", ios::out);
+     hDbgoutfile << timestep << " ";
+     for(int i=0; i<nchrom; ++i)
+        for(int j=i; j<nchrom; ++j)
+           hDbgoutfile << hf[i*nchrom+j] << " ";
+        hDbgoutfile << endl;
+  }
 }
 
 void amideI::writeJ()
 { jobfile.write(reinterpret_cast<char*>(&nchrom), sizeof(int)); }
 
-void amideI::writeD()
-{ doutfile.write(reinterpret_cast<char*>(&tdmuf[0]), (3*nchrom)*sizeof(float)); 
+void amideI::writeD(int timestep){ 
 
-  //for(int i=0; i<(3*nchrom); ++i)
-  //    cout << tdmuf[i] << " ";
-  //cout << endl;
+  doutfile.write(reinterpret_cast<char*>(&tdmuf[0]), (3*nchrom)*sizeof(float)); 
+
+  if(nise) {
+     dDbgoutfile << timestep << " ";
+     for(int i=0; i<(3*nchrom); ++i)
+        dDbgoutfile << tdmuf[i] << " ";
+     dDbgoutfile << endl;
+  }
 }
 
 void amideI::freqDist()

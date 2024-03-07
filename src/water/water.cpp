@@ -2,16 +2,17 @@
 
 water::water(string wm_name, string wS_wmap_name, string wB_map_name, 
              string job_type, string traj_file_name, string gro_file_name, 
-             string atoms_file_name, int nfr, int d2o,  int nst, 
+             string atoms_file_name, int nfr, int d2o,  int nst, int nbins,
              bool doir, bool doraman, bool dosfg, bool doDoDov, bool eHp, bool intrac, 
-             bool intermc_OHs, float trdip_for_SFG, float fermi_c, float imcut) : 
+             bool intermc_OHs, float trdip_for_SFG, float fermi_c, float imcut,
+             float wmin, float wmax) : 
              water_model_name_inp(wm_name), jobType(job_type), 
              traj_file(traj_file_name), gro_file(gro_file_name), 
              ams_file(atoms_file_name), wms(wS_wmap_name, job_type, intrac), 
              wmb(wB_map_name, job_type), nframes(nfr), nd2o(d2o), startframe(nst),
-             ir(doir), raman(doraman), sfg(dosfg), DoDv(doDoDov), 
+             nbins(nbins), ir(doir), raman(doraman), sfg(dosfg), DoDv(doDoDov), 
              printHam(eHp), intermcs(intermc_OHs), tdSFG(trdip_for_SFG), fc(fermi_c),
-             imcut(imcut)
+             imcut(imcut), w_min(wmin), w_max(wmax)
 {
    // removing old files
    vector<string> files_to_remove;
@@ -59,6 +60,12 @@ water::water(string wm_name, string wS_wmap_name, string wB_map_name,
    plzbf.resize(nchromt*6,0.0);
    fzf.resize(nchromt,0.0);
 
+   // frequency and coupling-related stuff:
+   omegas.reserve(3*nwater);
+   w_diag_out.reserve(10000);
+   diag_w_bins.resize(nbins);
+   setupFreqDist();
+
    // 
    pz = constants::bond_plz_ratio-1.0;
 
@@ -97,36 +104,24 @@ water::water(string wm_name, string wS_wmap_name, string wB_map_name,
          if(counter<startframe)
            continue;
 
-         printf(" counter and frames %d %d \n",counter,nframes);
-
-         printf(" getting coordinates\n");
-
          x = traj.getCoords();
          traj.getBox(box);
          if(moveM) moveMsite();
 
-         printf(" calculating Efield \n");
          calcEf();
-
-         printf(" calculating wxpm \n");
          calcWXPM();
-
-         printf(" updating Hamiltonian\n");
          updateEx();
-
-         printf(" adding intermolecular couplings \n");
 
          if(intermcs) intermC();
          if(ir) trDip();
          if(raman) trPol();
 
-         printf(" writing Hamiltonian\n");
          writeH();
-
-         printf(" writing properties\n");
          if(ir) writeD(); 
          if(raman) writeP(); 
          if(sfg) writeFz();
+        
+         updateFreqDist();
       }
    }
    /////////////////////////////////////////////////////////////////////////////
@@ -137,8 +132,8 @@ water::water(string wm_name, string wS_wmap_name, string wB_map_name,
 
 
    // calc. frequency distributions
-   //if(printHam)   
-   //   freqDist();
+   if(printHam)   
+      printFreqDist();
 
    // write a temporary file for passing some info for subsequent job
    //jobfile.write(reinterpret_cast<char*>(&nchromt), sizeof(int));
@@ -173,6 +168,17 @@ void water::CalcSQuant()
       tdSFG *= constants::A0;
       ir = true;
       raman = true;
+   }
+
+   // damp intermolecular couplings if needed
+   if(imcut < 1e6){
+      printf("   Intermolecular couplings will be cut-off at %7.5f [A].\n",imcut);
+      imcut *= constants::A0;
+   }
+
+   if(printHam){
+      printf("   Distribution of diagonal frequencies will be printed to %s file.\n",w_dist_fname.c_str());
+      printf("   w_min = %7.5f   w_max = %7.5f   nbins = %d\n",w_min,w_max,nbins);
    }
 }
 
@@ -244,6 +250,10 @@ void water::waterJob(){
    uncs = false;
 
    printf("\n** Reading job type ** \n");
+   
+   if(jobType=="wswbH2O" and !intrac)
+      jobType=="wsOH";
+
    if(jobType=="wsOH"){
       ws = true;
       nchroms = 2*nwater;
@@ -601,7 +611,7 @@ double water::waterTDC(const rvec &roha, const rvec &trda, const rvec &va,
 // Transition dipole coupling between 2 hydroxyl chromophores
 // of water 
 //
-   double dm, dm3, wc;
+   double dm, dm3, wc, wcr;
    rvec rohb, trdb, ddv;
 
    addRvec(va,vb,rohb,-1);
@@ -615,7 +625,15 @@ double water::waterTDC(const rvec &roha, const rvec &trda, const rvec &va,
    dm3 = dm*dm*dm;
    unitv(ddv);
    wc = constants::AU_TO_WN*(dot(roha,rohb)-3.0*dot(roha,ddv)*dot(rohb,ddv))/dm3;
-   return wc;
+
+   // cut-off for intermolecular couplings
+   if(dm < imcut){
+     wcr = wc;
+   }else{
+     wcr = 0.0;
+   }
+
+   return wcr;
 }
 
 void water::calcWXPM()
@@ -974,14 +992,50 @@ void water::moveMsite()
    }
 }
 
-void water::freqDist()
+void water::setupFreqDist()
 {
-   uint t;
 //
-// Diagonal frequencies
+// set up frequency distribution
 //
+   fill_n(diag_w_bins.begin(), nbins, 0);
+   dw = (w_max - w_min)/nbins;
+   //w_diag_out = 0;
+}
+
+void water::updateFreqDist(){
+//
+// Update frequency distribution here
+//
+//
+   // remove zero frequencies for OD bend since they are zeros (no map exists for them!)
+   // but they might show up in some isotope mixtures
    if(!DoDv)
       omegas.erase(remove(begin(omegas), end(omegas), 0.0), end(omegas));
+
+   int idx;
+   for(unsigned int i=0; i<omegas.size(); ++i){
+      idx = static_cast<int> (omegas[i] - w_min)/dw;
+      if (idx>0 && idx<nbins){
+         diag_w_bins[idx] += 1;
+      }else{
+         if(w_diag_out.size() < 10000)
+            w_diag_out.push_back(omegas[i]);
+       }
+   }
+   
+   // clean up omegas array
+   omegas.clear();
+
+}
+
+void water::printFreqDist()
+{
+//
+// print diagonal frequencies
+//
+   uint t, wds;
+   int nc;
+   float norm;
 
    ofstream w_dist_file;
    w_dist_file.open(w_dist_fname);
@@ -990,43 +1044,31 @@ void water::freqDist()
       exit(EXIT_FAILURE);
    }
 
-   printf("   Writing diagonal frequencies into %s \n",w_dist_fname.c_str());
-   for(t=0; t<omegas.size(); ++t)
-      w_dist_file << omegas[t] << endl;
+   printf("\n** Writing diagonal frequencies into %s.\n",w_dist_fname.c_str());
+  
+   wds = w_diag_out.size(); 
+   if(w_diag_out.size()>0){
+      printf("   Warning! %d diagonal frequencies were outside of [%7.2f,%7.2f] frequency range.\n",wds,w_min,w_max);
+      printf("            diagonal frequencies outside the range:\n  ");
+     
+      nc = 0;
+      for(t=0; t<wds;++t){
+         printf(" %7.2f ",w_diag_out[t]);
+         nc+=1;
+         if(nc==15){
+            printf("\n");
+            nc = 0;
+         }
+      }
+   }
+
+   norm = 0.0;
+   for(t=0; t<diag_w_bins.size(); ++t)
+      norm += diag_w_bins[t];
+
+   for(t=0; t<diag_w_bins.size(); ++t)
+      w_dist_file << w_min + dw*(1.0*t + 0.5) << " " << diag_w_bins[t]/norm << endl;
 
    w_dist_file.close();
-//
-// Intramolecular couplings
-//
-   ofstream w_intra_file;
-   w_intra_file.open(w_intra_fname);
-   if(!w_intra_file.is_open()){
-      printf(" Error! Cannot open file: %s \n",w_intra_fname.c_str());
-      exit(EXIT_FAILURE);
-   }
-
-   printf("   Writing intramolecular couplings [in cm-1] into %s \n",w_intra_fname.c_str());
-   if(jobType=="wswbH2O" || jobType=="wswbD2O" || jobType=="wswbiso")
-      printf("   Note that Fermi couplings %7.2f [cm-1] will not be printed.\n",fc);
-
-   for(t=0; t<w_intra.size(); ++t)
-      w_intra_file << w_intra[t] << endl;
-
-   w_intra_file.close();
-//
-// Intermolecular couplings
-//
-   ofstream w_inter_file;
-   w_inter_file.open(w_inter_fname);
-   if(!w_inter_file.is_open()){
-      printf(" Error! Cannot open file: %s \n",w_inter_fname.c_str());
-      exit(EXIT_FAILURE);
-   }
-
-   printf("   Writing intermolecular couplings [in cm-1] into %s \n",w_inter_fname.c_str());
-   for(t=0; t<w_inter.size(); ++t)
-      w_inter_file << w_inter[t] << endl;
-
-   w_inter_file.close();
    
 }

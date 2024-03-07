@@ -21,8 +21,8 @@ class water{
 
 public:
    water(string, string, string, string, string, string, 
-         string, int, int, int, bool, bool, bool, bool, 
-         bool, bool, bool, float, float, float);
+         string, int, int, int, int, bool, bool, bool, bool, 
+         bool, bool, bool, float, float, float, float, float);
 
   ~water();
 
@@ -39,6 +39,7 @@ private:
   int nframes;
   int nd2o = 0;
   int startframe = 1;
+  int nbins;
   
   bool ir;
   bool raman;
@@ -93,8 +94,10 @@ private:
   vector<float> w20b;
 
   vector<float> omegas;
+  vector<int> diag_w_bins;
   vector<float> w_intra;
   vector<float> w_inter;
+  vector<float> w_diag_out;
 
   int now, nhw, nmw;
   int nh2o, nhod;
@@ -111,6 +114,9 @@ private:
   float trdip;
   float pz;
   float rom;
+  float w_min;
+  float w_max;
+  float dw;
 
   string water_map_name;
   string chromType;
@@ -144,7 +150,9 @@ private:
   void trPol();
   void CalcSQuant();
   void moveMsite();
-  void freqDist();
+  void setupFreqDist();
+  void printFreqDist();
+  void updateFreqDist();
 
   void writeH();
   void writeD();

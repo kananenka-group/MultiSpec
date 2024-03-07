@@ -24,10 +24,10 @@ int main(int argc, char ** argv){
    water S (input.getWaterModel(), input.getwSMap(), input.getwBMap(),
             input.getJobType(), input.getTrajFile(), input.getGroFile(),
             input.getAmsFile(), input.getNFrames(), input.getND2O(),
-            input.getStartFrame(), input.ifIR(), 
+            input.getStartFrame(), input.getNbins(), input.ifIR(), 
             input.ifRaman(), input.ifSFG(), input.ifDODv(), input.getExcHam(),
             input.getIntraC(), input.getInermcs(), input.getTDSFG(), 
-            input.getFc(), input.getImcut());
+            input.getFc(), input.getImcut(), input.getwmin(), input.getwmax());
 
    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 

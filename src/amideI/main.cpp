@@ -26,7 +26,7 @@ int main(int argc, char ** argv){
              input.getTopFile(), input.getJobType(), input.getIsoL(),
              input.getNNmap(), input.getNNCmap(), input.getELmap(), 
              input.getNFrames(), input.getStartFrame(), input.ifIR(), 
-             input.getExcHam(), input.getIsoShift());
+             input.getExcHam(), input.getIsoShift(), input.getNISE());
 
    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 

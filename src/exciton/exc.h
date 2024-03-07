@@ -13,6 +13,7 @@
 #include "mkl.h"
 #include <omp.h>
 #include <pthread.h>
+#include "ir2d.h"
 #include "../const/const.h"
 #include "../fft/dofft.h"
 #include "../math/nummath.h"
@@ -23,21 +24,24 @@ using namespace std;
 class Exc{
 
 public:
-   Exc(string, string, string, int, int, int, 
+   Exc(string, string, string, int, int, int, int,
        double, double, double, double, double,
-       double, double, bool, bool, bool, bool, 
-       bool);
+       double, double, double, double, bool, 
+       bool, bool, bool, bool);
   ~Exc(){};
 
    void run();
 
 private:
    void readHf(int);
+   void readHs(int);
+   void readDs(int);
    void readDf(int,bool);
    void readPf(int,bool);
    void readFzf(int,bool);
    void FTIR();
    void calc2DIR();
+   void start2DIR();
    void Raman();
    void SFG();
    void moveF();
@@ -57,14 +61,27 @@ private:
    void sdRaman();
    int get2nx(int, int);
    void buildM21();
+   void expH(vector<complex<double>>&, vector<double>, int);
+   void prop(vector<complex<double>>&, vector<double>, int, int);
+   void assignD(int);
+   complex<double> calcR2D_R1(int);
+   complex<double> calcR2D_R2(int);
+   void save_F1_t0t1_mu0(int);
+   void assignDpol(vector<complex<double>> &, vector<complex<double>> &,
+                   vector<complex<double>> &, vector<complex<double>> &,
+                   vector<complex<double>> &, vector<complex<double>> &,
+                   int, int);
+   void writeR2D();
+   void write2DRabs();
+   void write2Dout(vector<complex<double>>, string, string, int);
 
    vector<double> H1;
    vector<double> mu1_x;
    vector<double> mu1_y;
    vector<double> mu1_z;
-   vector<double> mu1_2_x;
-   vector<double> mu1_2_y;
-   vector<double> mu1_2_z;
+   vector<double> mu01_x;
+   vector<double> mu01_y;
+   vector<double> mu01_z;
    vector<double> mu1_x0;
    vector<double> mu1_y0;
    vector<double> mu1_z0;
@@ -91,7 +108,46 @@ private:
    vector<double> sdr_vh;
    vector<double> sdr_w;
 
-   vector<double> H2;
+   // 2D 
+   vector<double> H2;                   // two-exciton Hamiltonian read from Hfile
+   vector<complex<double>> F1_t0t1;     // one-exciton Hamiltonian propagated t0 -> t1
+   vector<complex<double>> F1_t1t2;     // one-exciton Hamiltonian propagated t1 -> t2
+   vector<complex<double>> F1_t2t3;     // one-exciton Hamiltonian propagated t2 -> t3 
+   vector<complex<double>> F2_t1t2;     // two-exciton Hamiltonian propagated t1 -> t2
+   vector<complex<double>> F2_t2t3;     // two-exciton Hamiltonian propagated t2 -> t3
+   vector<complex<double>> R2D_R1;
+   vector<complex<double>> R2D_R2;
+   vector<complex<double>> R1D;
+   vector<complex<double>> F1_t0t1_mu01_0_x;
+   vector<complex<double>> F1_t0t1_mu01_0_y;
+   vector<complex<double>> F1_t0t1_mu01_0_z;
+   vector<double> mu12_x;
+   vector<double> mu12_y;
+   vector<double> mu12_z;
+   vector<double> mu01_t0_x;
+   vector<double> mu01_t0_y;
+   vector<double> mu01_t0_z;
+   vector<double> mu01_t1_x;
+   vector<double> mu01_t1_y;
+   vector<double> mu01_t1_z;
+   vector<double> mu01_t2_x;
+   vector<double> mu01_t2_y;
+   vector<double> mu01_t2_z;
+   vector<double> mu01_t3_x;
+   vector<double> mu01_t3_y;
+   vector<double> mu01_t3_z;
+   vector<double> mu12_t2_x;
+   vector<double> mu12_t2_y;
+   vector<double> mu12_t2_z;
+   vector<double> mu12_t3_x;
+   vector<double> mu12_t3_y;
+   vector<double> mu12_t3_z;
+   vector<complex<double>> mu0_eg;
+   vector<complex<double>> mu1_eg;
+   vector<complex<double>> mu2_eg;
+   vector<complex<double>> mu3_eg;
+   vector<complex<double>> mu2_ce;
+   vector<complex<double>> mu3_ce;
 
    vector<complex<double>> F;
    vector<complex<double>> mR1D;
@@ -116,6 +172,7 @@ private:
 
    int nchrom;
    int n1ex;
+   int n1ex2;
    int n2ex;
    int n2ex2;
    int ntime;
@@ -125,16 +182,20 @@ private:
    int nstart;
    int nsep;
    int ndim1;
-   int NFFT = 4096;
+   int NFFT;
+   int nt1t3;
+   int nt2;
+   int nfrmn=0;
 
    double dt;
    double tc;
-   double T1;
-   double T2;
+   double T1_rlx;
    double sep_time;
    double start_time;
    double w_avg;
    double anharm;
+   double t1t3;
+   double t2;
 
    bool ir;
    bool ir2d;

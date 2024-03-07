@@ -24,11 +24,12 @@ Input::Input(int argc, char ** argv){
        ("itp_files",      po::value<vector<string> >(&itpfs)->multitoken(),   "itp files (provide all of them)")
        ("top_file",       po::value<string>(&top_file),         "gromacs *.top file")
        ("nn_map",         po::value<string>(&nn_map),           "nearest-neighbor frequency map")
-       ("nnc_map",        po::value<string>(&nnc_map),           "nearest-neighbor coupling map")
+       ("nnc_map",        po::value<string>(&nnc_map),          "nearest-neighbor coupling map")
        ("el_map",         po::value<string>(&el_map),           "electrostatic backbone map")
        ("isotope_shift",  po::value<float>(&isoShift),          "isotope frequency shift")
        ("residues_maps",  po::value<string>(&res_map_file),     "file containing maps for specific residues")
-       ("exc_ham",        po::value<bool>(&excHam),       "print diagonal frequencies, inter- and intramolecular couplings")
+       ("exc_ham",        po::value<bool>(&excHam),             "print diagonal frequencies, inter- and intramolecular couplings")
+       ("nise",           po::value<bool>(&nise),               "print output files in NISE format")
        //("cut_off_elst",   po::value<string>(&cutoffelst),       "cut-off for calculating electrostatics")
        ;
 
@@ -68,6 +69,7 @@ Input::Input(int argc, char ** argv){
     inpfile << "        el_map = " << el_map << endl;
     inpfile << "     itp_files = ";
     inpfile << " isotope_shift = " << isoShift << endl;
+    inpfile << "          nise = " << nise << endl;
     //inpfile << "  cut_off_elst = " << cutoffelst << endl;
     for(uint i=0; i<itpfs.size(); ++i)
        inpfile << itpfs[i] << " ";

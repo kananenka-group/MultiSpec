@@ -30,6 +30,9 @@ Input::Input(int argc, char ** argv){
        ("SFG",    po::value<bool>(&sfg),               "Calculate SFG spectrum")
        ("inh",    po::value<bool>(&sd),                "Inhomogeneous limit")
        ("anharm", po::value<double>(&anharm),          "Diagonal anharmonicity for 2D IR")
+       ("t1t3",   po::value<double>(&t1t3),            "t1 and t3 times in 2D IR")
+       ("t2",     po::value<double>(&t2),              "t2 time in 2D IR")
+       ("nfft",   po::value<int>(&NFFT),               "grid size for FFT")
        ;
 
        po::variables_map vm;
@@ -88,9 +91,12 @@ Input::Input(int argc, char ** argv){
    inpfile << "      IR = " <<  ir << endl;
    inpfile << "    IR2D = " << ir2d << endl;
    inpfile << "  anharm = " << anharm << endl;
+   inpfile << "    t1t3 = " << t1t3 << endl;
+   inpfile << "      t2 = " << t2 << endl; 
    inpfile << "   Raman = " <<  raman << endl;
    inpfile << "     SFG = " <<  sfg << endl;
    inpfile << "     inh = " <<  sd << endl;
+   inpfile << "    nfft = " << NFFT << endl;
    inpfile.close();
 
 }

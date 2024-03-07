@@ -26,7 +26,7 @@ class amideI{
 public:
    amideI(string, string, string, vector<string>, string, string,
           vector<string>, string, string, string, int, int, 
-          bool, bool, float);
+          bool, bool, float, bool);
 
   ~amideI();
 
@@ -58,10 +58,13 @@ private:
   bool printH;
 
   float isoShift;
+  bool nise;
 
   ofstream houtfile;
   ofstream doutfile;
   ofstream jobfile;
+  ofstream hDbgoutfile;
+  ofstream dDbgoutfile;
 
   vector<float> hf;
   vector<float> tdmuf;
@@ -100,8 +103,8 @@ private:
   string w_inter_fname = "w_inter.dat";
 
   void writeJ();
-  void writeH();
-  void writeD();
+  void writeH(int);
+  void writeD(int);
   void findAmideI();
   void amideIJob();
   void nnfs();

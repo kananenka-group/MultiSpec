@@ -25,6 +25,7 @@ public:
   bool ifIR()               const { return ir; }
   int getStartFrame()       const { return startframe; }
   bool getExcHam()          const { return excHam; }
+  bool getNISE()             const { return nise; }
   vector<string> getItpfs() const { return itpfs; }
   vector<string> getIsoL()  const { return isolabels; }
   string getNNmap()         const { return nn_map; }
@@ -39,6 +40,7 @@ private:
 
   bool ir    = false; 
   bool excHam = false;
+  bool nise = false;
 
   // 13C=18O isotope shift in cm-1
   // taken from JACS, 134, 19118-19128 (2012)

@@ -19,10 +19,11 @@ int main(int argc, char ** argv){
  
    // run simulation
    Exc S (input.getHfile(), input.getDfile(), input.getPfile(), 
-          input.getNchrom(), input.getNfrm(), input.getNavg(),
+          input.getNchrom(), input.getNfrm(), input.getNavg(), input.getNFFT(),
           input.getdt(), input.gettc(), input.getTrlx(), input.getTsep(),
-          input.getts(), input.getWavg(), input.getAnh(), input.ifIR(), 
-          input.ifIR2D(), input.ifRaman(), input.ifSFG(), input.ifSD());
+          input.getts(), input.getWavg(), input.getAnh(), input.gett1t3(),
+          input.gett2(), input.ifIR(), input.ifIR2D(), input.ifRaman(), 
+          input.ifSFG(), input.ifSD());
 
    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 
